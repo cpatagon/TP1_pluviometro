@@ -2,7 +2,8 @@
 
 **autor: Luis Gómez**
 
-Este proyecto implementa un pluviómetro utilizando la plataforma MBED. El sistema mide la cantidad de lluvia mediante un sensor de tick y reporta la cantidad de lluvia acumulada a través de la comunicación serial.
+Este proyecto implementa un pluviómetro utilizando la plataforma MBED y sobre un integrado STM32 placa modelo NUCLEO F429ZI. El sistema mide la cantidad de lluvia mediante un sensor de tick y reporta la cantidad de lluvia acumulada a través de la comunicación serial.
+
 
 ## Descripción
 
@@ -15,10 +16,25 @@ El sistema se compone de sensores para detectar la lluvia, un análisis de datos
 
 ## Estructura de componentes 
 
-![Figura 2: Esquema de un pluviómetro de balancín (fuente. Segerer et al., 2006)
-](doc/fig/esquema_periferico_pluviometro.jpg){width=40%}
+![Figura 2: Esquema componentes pluviómetro
+](doc/fig/esquema_periferico_pluviometro.jpg)
+
+**Figura 2:** Esquema componentes pluviómetro
+
+
+## Componentes Utilizados 
+
+
+
 
 ## Estructura del Código
+
+
+![Figura 3: Diagrama Flujo código pluviómetro 
+](doc/fig/Diagrama_pluviometro.png)
+
+**Figura 3:** Diagrama de flujo funcionamiento pluviómetro
+
 
 ### Sensores
 
@@ -38,6 +54,9 @@ El sistema se compone de sensores para detectar la lluvia, un análisis de datos
 - **printRain(const char* buffer)**: Imprime un mensaje indicando que se ha detectado lluvia.
 - **DateTimeNow()**: Obtiene la fecha y hora actual en formato `"%Y-%m-%d %H:%M:%S"`.
 - **printAccumulatedRainfall()**: Imprime la cantidad de lluvia acumulada en el formato `"YYYY-MM-DD HH:MM - Accumulated rainfall: X.XX mm"`.
+
+
+ 
 
 ## Uso
 
@@ -61,7 +80,7 @@ El sistema se compone de sensores para detectar la lluvia, un análisis de datos
     - Detectará si está lloviendo y actuará en consecuencia.
     - Verificará a intervalos regulares la cantidad de lluvia acumulada y la reportará.
 
-### Ejemplo de Salida
+### Ejemplo de Salida UART
 
 ```plaintext
 2024-07-01 12:00:00 - Rain detected
