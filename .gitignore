@@ -1,0 +1,199 @@
+.build
+.mbed
+projectfiles
+*.py*
+mbed-os
+BUILD
+
+compile_commands.json
+.clangd
+.cache
+# Created by https://www.toptal.com/developers/gitignore/api/emacs,executable,c
+# Edit at https://www.toptal.com/developers/gitignore?templates=emacs,executable,c
+
+### ceeding ###
+test/
+
+### ceeding ###
+build/
+
+
+### settings ###
+.settings/
+
+### Drivers ###
+.Drivers/
+
+### Debug ###
+.Debug/
+
+### Core ###
+.Core/
+
+
+### C ###
+# Prerequisites
+*.d
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+#*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+### Emacs ###
+# -*- mode: gitignore; -*-
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Org-mode
+.org-id-locations
+*_archive
+
+# flymake-mode
+*_flymake.*
+
+# eshell files
+/eshell/history
+/eshell/lastdir
+
+# elpa packages
+/elpa/
+
+# reftex files
+*.rel
+
+# AUCTeX auto folder
+/auto/
+
+# cask packages
+.cask/
+dist/
+
+# Flycheck
+flycheck_*.el
+
+# server auth directory
+/server/
+
+# projectiles files
+.projectile
+
+# directory configuration
+.dir-locals.el
+
+# network security
+/network-security.data
+
+*shell*
+
+
+### doxygen
+*~
+.*sw?
+\#*
+.DS_Store
+
+*.rej
+*.orig
+
+*.pro
+/packages/rpm/doxygen.spec
+*.idb
+*.pdb
+
+/doxygen_docs
+/doxygen.tag
+/build*
+/qtools_docs
+/warnings.log
+
+tags
+.cache/
+
+.idea
+cmake-build-debug/
+cmake-build-debug-event-trace/
+.vscode/
+
+/examples/html/*
+/examples/latex/*
+
+
+### Executable ###
+*.bat
+*.cgi
+*.com
+*.gadget
+*.jar
+*.pif
+*.vb
+*.wsf
+
+
+
+# STM32CubeIDE
+.metadata/
+.settings/
+.Debug/
+*.ld
+*.launch
+.projet
+.cprojet
+.mxproject
+
+
+
+
+
+tp2_pluviometro
