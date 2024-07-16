@@ -193,12 +193,16 @@ void printAccumulatedRainfall() {
     struct tm* timeinfo = localtime(&seconds);
     char dateTime[80];
     strftime(dateTime, sizeof(dateTime), DATE_FORMAT, timeinfo);
-    
-    //int rainfallInteger = (int)(rainfallCount * MM_PER_TICK);
-    int rainfallDecimalmm = (int)((rainfallCount * MM_PER_TICK));
-    
+
+    // Calcular la lluvia acumulada en décimas de mm
+    int accumulatedRainfall = rainfallCount * MM_PER_TICK; // MM_PER_TICK es ahora 0.1 para décimas de mm
+
+    // Preparar el buffer para imprimir
     char buffer[100];
-    int len = sprintf(buffer, "%d decimal mm\n", 
-                      dateTime, MSG_ACCUMULATED_RAINFALL,  rainfallDecimalmm);
+    int len = sprintf(buffer, "%s%s%d.%01d mm\n", 
+                      dateTime, MSG_ACCUMULATED_RAINFALL, accumulatedRainfall / 10, accumulatedRainfall % 10);
+    
+    // Imprimir el resultado
     pc.write(buffer, len);
 }
+
