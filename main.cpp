@@ -7,7 +7,7 @@
 
 #include "mbed.h"
 #include "arm_book_lib.h"
-#include "weather_station.h"
+
 
 // Constantes de configuración
 #define TIME_INI  1593561600  ///< 1 de julio de 2020, 00:00:00
@@ -122,15 +122,23 @@ void accumulateRainfall() {
  */
 bool hasTimePassedMinutesRTC(int minutes) {
     static time_t lastTime = 0;
-    time_t currentTime = time(NULL);
+    time_t currentTime;
 
-    if (difftime(currentTime, lastTime) >= minutes * 60) {
+    // Obtener el tiempo actual del RTC
+    currentTime = rtc_read();
+
+    // Calcular la diferencia de tiempo en segundos
+    time_t timeDifference = currentTime - lastTime;
+
+    // Verificar si ha pasado el tiempo especificado
+    if (timeDifference >= minutes * 60) {
         lastTime = currentTime;
         return true;
     }
 
     return false;
 }
+
 
 /**
  * @brief Actúa en base a la detección de lluvia
