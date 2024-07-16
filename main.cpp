@@ -15,7 +15,7 @@
 #define DELAY_BETWEEN_TICK 500  ///< 500 ms
 #define SWITCH_TICK_RAIN BUTTON1  ///< Botón para detectar lluvia
 #define RAINFALL_CHECK_INTERVAL 60  ///< Intervalo de verificación de lluvia en segundos
-#define MM_PER_TICK 0.2f  ///< 0.2 mm de agua por tick
+#define MM_PER_TICK 2  ///< 2 décimas de mm de agua por tick
 #define RAINFALL_COUNT_INI 0  ///< Contador de lluvia inicial
 #define LAST_MINUTE_INI -1  ///< Último minuto inicial
 
@@ -32,7 +32,7 @@ bool isRaining();
 // Análisis de Datos
 void analyzeRainfall();
 void accumulateRainfall();
-bool hasTimePassedMinutesRTC(int seconds);
+bool hasTimePassedMinutesRTC(int waiting_seconds);
 
 // Actuación
 void actOnRainfall();
@@ -87,7 +87,7 @@ void initializeSensors() {
 }
 
 /**
- * @brief Verifica si está lloviendo
+ * @brief Verifica si se ha producido un tick 
  * 
  * @return true si el botón de detección de lluvia está activado, false en caso contrario
  */
@@ -120,7 +120,7 @@ void accumulateRainfall() {
  * @param minutes Cantidad de minutos a verificar
  * @return true si ha pasado el tiempo especificado, false en caso contrario
  */
-bool hasTimePassedMinutesRTC(int seconds) {
+bool hasTimePassedMinutesRTC(int waiting_seconds) {
     static time_t lastTime = 0;
     time_t currentTime;
 
@@ -131,7 +131,7 @@ bool hasTimePassedMinutesRTC(int seconds) {
     time_t timeDifference = currentTime - lastTime;
 
     // Verificar si ha pasado el tiempo especificado
-    if (timeDifference >= seconds) {
+    if (timeDifference >= waiting_seconds) {
         lastTime = currentTime;
         return true;
     }
@@ -194,12 +194,11 @@ void printAccumulatedRainfall() {
     char dateTime[80];
     strftime(dateTime, sizeof(dateTime), DATE_FORMAT, timeinfo);
     
-    int rainfallInteger = (int)(rainfallCount * MM_PER_TICK);
-    int rainfallDecimal = (int)((rainfallCount * MM_PER_TICK - rainfallInteger) * 100);
+    //int rainfallInteger = (int)(rainfallCount * MM_PER_TICK);
+    int rainfallDecimalmm = (int)((rainfallCount * MM_PER_TICK));
     
     char buffer[100];
-    int len = sprintf(buffer, "%s%s%d.%02d mm\n", 
-                      dateTime, MSG_ACCUMULATED_RAINFALL, rainfallInteger, rainfallDecimal);
-    
+    int len = sprintf(buffer, "%d decimal mm\n", 
+                      dateTime, MSG_ACCUMULATED_RAINFALL,  rainfallDecimalmm);
     pc.write(buffer, len);
 }
