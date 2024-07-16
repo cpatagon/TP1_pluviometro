@@ -14,7 +14,7 @@
 #define BAUD_RATE 9600  ///< Velocidad de comunicación serial
 #define DELAY_BETWEEN_TICK 500  ///< 500 ms
 #define SWITCH_TICK_RAIN BUTTON1  ///< Botón para detectar lluvia
-#define RAINFALL_CHECK_INTERVAL 1  ///< Intervalo de verificación de lluvia en minutos
+#define RAINFALL_CHECK_INTERVAL 60  ///< Intervalo de verificación de lluvia en segundos
 #define MM_PER_TICK 0.2f  ///< 0.2 mm de agua por tick
 #define RAINFALL_COUNT_INI 0  ///< Contador de lluvia inicial
 #define LAST_MINUTE_INI -1  ///< Último minuto inicial
@@ -32,7 +32,7 @@ bool isRaining();
 // Análisis de Datos
 void analyzeRainfall();
 void accumulateRainfall();
-bool hasTimePassedMinutesRTC(int minutes);
+bool hasTimePassedMinutesRTC(int seconds);
 
 // Actuación
 void actOnRainfall();
@@ -120,7 +120,7 @@ void accumulateRainfall() {
  * @param minutes Cantidad de minutos a verificar
  * @return true si ha pasado el tiempo especificado, false en caso contrario
  */
-bool hasTimePassedMinutesRTC(int minutes) {
+bool hasTimePassedMinutesRTC(int seconds) {
     static time_t lastTime = 0;
     time_t currentTime;
 
@@ -131,7 +131,7 @@ bool hasTimePassedMinutesRTC(int minutes) {
     time_t timeDifference = currentTime - lastTime;
 
     // Verificar si ha pasado el tiempo especificado
-    if (timeDifference >= minutes * 60) {
+    if (timeDifference >= seconds) {
         lastTime = currentTime;
         return true;
     }
