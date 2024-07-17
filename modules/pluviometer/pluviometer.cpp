@@ -39,6 +39,8 @@
 
 /* === Private variable declarations =========================================================== */
 
+DigitalOut alarmLed(LED1);
+DigitalOut tickLed(LED2);
 DigitalIn tickRain(SWITCH_TICK_RAIN);  ///< Botón de detección de lluvia
 
 int rainfallCount = RAINFALL_COUNT_INI;  ///< Contador de lluvia
@@ -58,6 +60,9 @@ const char* DateTimeNow(void);
 
 // Variables globales
 BufferedSerial pc(USBTX, USBRX, BAUD_RATE);  ///< Comunicación serial
+
+
+
 
 /* === Private function implementation ========================================================= */
 
