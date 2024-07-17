@@ -20,8 +20,10 @@ bool hasTimePassedMinutesRTC(int minutes);
 int main()
 {
     initializeSensors();
+    initializeDebounce();
 
     while (true) {
+      updateDebounce();
         if (isRaining()) {
             actOnRainfall();
         } else {

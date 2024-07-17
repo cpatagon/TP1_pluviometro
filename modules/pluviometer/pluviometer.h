@@ -32,7 +32,7 @@
 /* === Headers files inclusions ================================================================ */
 
 #include "mbed.h"
-
+#include "debounce.h"
 
 /* === Cabecera C++ ============================================================================ */
 
@@ -61,6 +61,9 @@ extern "C" {
 /* === Public data type declarations =========================================================== */
 
 /* === Public variable declarations ============================================================ */
+void initializeDebounce();
+void updateDebounce();
+
 extern DigitalOut alarmLed;  ///< LED de alarma
 extern DigitalOut tickLed;  ///< LED de tick
 

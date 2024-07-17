@@ -29,7 +29,7 @@
 /* === Headers files inclusions =============================================================== */
 #include "mbed.h"
 #include "arm_book_lib.h"
-
+#include "debounce.h"
 #include "pluviometer.h"
 
 /* === Macros definitions ====================================================================== */
@@ -45,6 +45,10 @@ DigitalIn tickRain(SWITCH_TICK_RAIN);  ///< Botón de detección de lluvia
 
 int rainfallCount = RAINFALL_COUNT_INI;  ///< Contador de lluvia
 int lastMinute = LAST_MINUTE_INI;  ///< Último minuto
+
+static delay_t debounceDelay;
+static bool buttonPressed = false;
+
 
 /* === Private function declarations =========================================================== */
 
@@ -65,6 +69,21 @@ BufferedSerial pc(USBTX, USBRX, BAUD_RATE);  ///< Comunicación serial
 
 
 /* === Private function implementation ========================================================= */
+
+
+void initializeDebounce() {
+    debounceFSM_init();
+    delayInit(&debounceDelay, 40);  // 40 ms de debounce
+}
+
+
+void updateDebounce() {
+    debounceFSM_update(&debounceDelay);
+    if (readKey()) {
+        buttonPressed = true;
+    }
+}
+
 
 /**
  * @brief Analiza la lluvia detectada
@@ -150,7 +169,11 @@ void initializeSensors() {
  * @return true si el botón de detección de lluvia está activado, false en caso contrario
  */
 bool isRaining() {
-    return (tickRain == ON);
+    if (buttonPressed) {
+        buttonPressed = false;
+        return true;
+    }
+    return false; 
 }
 
 /**
