@@ -48,6 +48,7 @@ int lastMinute = LAST_MINUTE_INI;  ///< Último minuto
 
 static delay_t debounceDelay;
 static bool buttonPressed = false;
+static delay_t analyzeDelay;
 
 
 /* === Private function declarations =========================================================== */
@@ -90,10 +91,19 @@ void updateDebounce() {
  * Imprime la hora actual y acumula la lluvia detectada.
  */
 void analyzeRainfall() {
-    const char* currentTime = DateTimeNow();
-    printRain(currentTime);
-    accumulateRainfall();
-    thread_sleep_for(DELAY_BETWEEN_TICK);
+  static bool analyzing = false;
+
+    if (!analyzing) {
+        // Comenzar el análisis
+        const char* currentTime = DateTimeNow();
+        printRain(currentTime);
+        accumulateRainfall();
+        analyzing = true;
+        delayWrite(&analyzeDelay, DELAY_BETWEEN_TICK);  // Reinicia el delay
+    } else if (delayRead(&analyzeDelay)) {
+        // El delay ha terminado
+        analyzing = false;
+    }
 }
 
 /**
@@ -160,6 +170,7 @@ void initializeSensors() {
     alarmLed = OFF;
     tickLed = OFF;
     set_time(TIME_INI); ///< Configurar la fecha y hora inicial
+    delayInit(&analyzeDelay, DELAY_BETWEEN_TICK);
 }
 
 /**
