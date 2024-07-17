@@ -5,6 +5,7 @@
 
 #include "stm32f4xx_hal.h"          /* HAL library inclusion */
 
+
 #include "delay.h" /* Inclusion of the file defining delay_t */
 
 typedef uint32_t tick_t; // Which library should be included for this to compile?
