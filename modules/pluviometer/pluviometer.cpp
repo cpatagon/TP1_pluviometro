@@ -77,7 +77,14 @@ void initializeDebounce() {
 }
 
 
-void updateDebounce() {
+void uupdateDebounce();
+    if (isRaining()) {
+        actOnRainfall();
+    } else {
+        alarmLed = OFF;
+        tickLed = OFF;
+    }pdateDebounce() {
+  
     debounceFSM_update(&debounceDelay);
     if (readKey()) {
         buttonPressed = true;
@@ -179,9 +186,7 @@ void initializeSensors() {
  * @return true si el botón de detección de lluvia está activado, false en caso contrario
  */
 bool isRaining() {
-    bool rain = buttonPressed;
-    buttonPressed = false;  // Reset the button state
-    return rain;
+    return readKey();
 }
 
 /**
