@@ -77,18 +77,8 @@ void initializeDebounce() {
 }
 
 
-void uupdateDebounce();
-    if (isRaining()) {
-        actOnRainfall();
-    } else {
-        alarmLed = OFF;
-        tickLed = OFF;
-    }pdateDebounce() {
-  
-    debounceFSM_update(&debounceDelay);
-    if (readKey()) {
-        buttonPressed = true;
-    }
+void updateDebounce(){
+  debounceFSM_update(&debounceDelay);
 }
 
 
