@@ -70,7 +70,6 @@ BufferedSerial pc(USBTX, USBRX, BAUD_RATE);  ///< Comunicación serial
 
 /* === Private function implementation ========================================================= */
 
-
 void initializeDebounce() {
     debounceFSM_init();
     delayInit(&debounceDelay, 40);  // 40 ms de debounce
@@ -169,11 +168,9 @@ void initializeSensors() {
  * @return true si el botón de detección de lluvia está activado, false en caso contrario
  */
 bool isRaining() {
-    if (buttonPressed) {
-        buttonPressed = false;
-        return true;
-    }
-    return false; 
+    bool rain = buttonPressed;
+    buttonPressed = false;  // Reset the button state
+    return rain;
 }
 
 /**

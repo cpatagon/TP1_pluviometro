@@ -1,3 +1,6 @@
+#ifndef DEBOUNCE_H
+#define DEBOUNCE_H
+
 #include "mbed.h"
 
 #include <stdint.h>  /* For standard uint32_t types */
@@ -37,4 +40,5 @@ void debounceFSM_init();
  * @retval  None
  */
 void debounceFSM_update(delay_t* delay);
+#endif // DEBOUNCE_H
 

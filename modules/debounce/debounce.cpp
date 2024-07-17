@@ -18,7 +18,7 @@
 
 
 // Define el botón usando la API de Mbed
-static DigitalIn userButton(BUTTON1);
+static DigitalIn userButton(BUTTON1, PullUp);
 
 /*
  * Definition of the states for the state machine
@@ -45,8 +45,10 @@ static bool_t PressButton=true;
  * Function that changes from true to false or from false to true
  * if the button is pressed without bouncing.
  */
-bool_t readKey(){
-    return PressButton;
+bool_t readKey() {
+    bool_t temp = PressButton;
+    PressButton = false;
+    return temp;
 }
 
 static void buttonPressed(void);
@@ -62,7 +64,6 @@ void debounceFSM_init(){
 	/* Initialize Estado */
 	assert(&PressButton!=NULL);
 	currentState=BUTTON_UP;
-	 userButton.mode(PullNone);  // Configura el modo del botón
 }
 
 /*
@@ -115,8 +116,7 @@ void debounceFSM_update(delay_t* delay) {
  * @retval  None
  */
 static void buttonPressed(){
-	PressButton = !(PressButton);
-	return;
+          PressButton = true;
 }
 
 /*función que invierte  el estado del LED3 */

@@ -1,3 +1,6 @@
+#ifndef DELAY_H
+#define DELAY_H
+
 #include <stdint.h>   /**< Para incluir los tipos uint32_t */
 #include <stdbool.h>  /**< Para incluir los tipos bool (booleanos) */
 
@@ -49,6 +52,7 @@ bool_t delayRead(delay_t *delay);
  * @param duration Nueva duración del retardo en ticks.
  */
 void delayWrite(delay_t *delay, tick_t duration);
+#endif // DELAY_H
 
 
 
