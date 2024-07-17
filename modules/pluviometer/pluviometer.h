@@ -47,7 +47,7 @@ extern "C" {
 #define BAUD_RATE 9600  ///< Velocidad de comunicación serial
 #define DELAY_BETWEEN_TICK 500  ///< 500 ms
 #define SWITCH_TICK_RAIN BUTTON1  ///< Botón para detectar lluvia
-#define RAINFALL_CHECK_INTERVAL 60  ///< Intervalo de verificación de lluvia en segundos
+
 #define MM_PER_TICK 2  ///< 2 décimas de mm de agua por tick
 #define RAINFALL_COUNT_INI 0  ///< Contador de lluvia inicial
 #define LAST_MINUTE_INI -1  ///< Último minuto inicial

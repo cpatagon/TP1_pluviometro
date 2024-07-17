@@ -9,12 +9,12 @@
 #include "arm_book_lib.h"
 #include "pluviometer.h"
 
+#define RAINFALL_CHECK_INTERVAL 60  ///< Intervalo de verificación de lluvia en segundos
+
 
 // Sensores
 bool hasTimePassedMinutesRTC(int minutes);
 
-// Actuación
-const char* DateTimeNow(void);
 
 
 int main()
@@ -63,14 +63,4 @@ bool hasTimePassedMinutesRTC(int waiting_seconds) {
 
 
 
-/**
- * @brief Obtiene la fecha y hora actual
- * 
- * @return Cadena de caracteres con la fecha y hora actual en formato "%Y-%m-%d %H:%M:%S"
- */
-const char* DateTimeNow() {
-    time_t seconds = time(NULL);
-    static char bufferTime[80];
-    strftime(bufferTime, sizeof(bufferTime), TIME_FORMAT, localtime(&seconds));
-    return bufferTime;
-}
+
