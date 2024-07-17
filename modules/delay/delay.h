@@ -2,7 +2,7 @@
 #include <stdbool.h>  /**< Para incluir los tipos bool (booleanos) */
 
 #include "stm32f4xx_hal.h"         /**< Inclusión de HAL */
-#include "stm32f4xx_nucleo_144.h"   /**< Inclusión de BSP */
+//#include "stm32f4xx_nucleo_144.h"   /**< Inclusión de BSP */
 
 typedef uint32_t tick_t;  /**< Definición de tipo para los ticks */
 typedef bool bool_t;      /**< Definición de tipo para los valores booleanos */

@@ -9,11 +9,15 @@
  *      program should use the debounce functions of the API debounce module
  *      and the non-blocking delays of the API_delay module.
  */
+#include "mbed.h"
 #include "stm32f4xx_hal.h"  		/* <- HAL include */
-#include "stm32f4xx_nucleo_144.h" 	/* <- BSP include */
 
 #include <assert.h>
 #include "debounce.h"
+
+
+// Define el botón usando la API de Mbed
+static DigitalIn userButton(BUTTON1);
 
 /*
  * Definition of the states for the state machine
@@ -57,7 +61,7 @@ void debounceFSM_init(){
 	/* Initialize Estado */
 	assert(&PressButton!=NULL);
 	currentState=BUTTON_UP;
-	return;
+	 userButton.mode(PullNone);  // Configura el modo del botón
 }
 
 /*
@@ -68,64 +72,39 @@ void debounceFSM_init(){
  * @param   delay: pointer to the delay instance
  * @retval  None
  */
-void debounceFSM_update(delay_t* delay){
-	assert(delay!=NULL);
-	assert(&currentState!=NULL);
+void debounceFSM_update(delay_t* delay) {
+    assert(delay != NULL);
+    assert(&currentState != NULL);
 
-	switch (currentState){
-	/*
-	 * In the BUTTON_UP state, it checks whether the button remains unpressed.
-	 * Otherwise, that is, if the button is pressed, the state changes to BUTTON_FALLING.
-	 */
-	case BUTTON_UP:
-		if (BSP_PB_GetState(BUTTON_USER)){
-	    	currentState=BUTTON_FALLING;
-		}
-		break;
-		/*
-		 * In the BUTTON_FALLING state, it checks if the button remains pressed for 40 ms.
-		 * If it remains pressed (condition 'yes'), the state changes to BUTTON_DOWN and the
-		 * state of LED1 is toggled. If the button does not remain pressed (condition 'no'),
-		 * the state changes back to BUTTON_UP, interpreting this event as a bounce.
-		 */
-	case BUTTON_FALLING:
-		if (BSP_PB_GetState(BUTTON_USER) && delayRead(delay)){
-	    	currentState=BUTTON_DOWN;
-	    	buttonPressed();
-	    	//PressButton = !(PressButton);
-		}
-		else {
-			currentState=BUTTON_UP;
-		}
-		break;
-	/*
-	 * In the BUTTON_DOWN state, if the button is released, the state changes to BUTTON_RAISING.
-	 */
-	case BUTTON_DOWN:
-		if (!BSP_PB_GetState(BUTTON_USER)){
-	    	currentState=BUTTON_RAISING;
-		}
-		break;
-	/*
-	 * In the BUTTON_RAISING state, it checks if the button remains unpressed for a certain delay.
-	 * If it remains unpressed (condition 'yes'), the state changes back to BUTTON_UP and
-	 * the buttonReleased function is called. If the button is pressed again (condition 'no'),
-	 * the state changes back to BUTTON_DOWN.
-	 */
-	case BUTTON_RAISING:
-		if (!BSP_PB_GetState(BUTTON_USER) && delayRead(delay)){
-	    	currentState=BUTTON_UP;
-	    	//buttonReleased();
-		}
-		else {
-			currentState=BUTTON_DOWN;
-		}
-		break;
-	default:
-			/* Handle unexpected state */
-		assert(0);
-	}
-	return;
+    switch (currentState) {
+    case BUTTON_UP:
+        if (userButton.read()) {
+            currentState = BUTTON_FALLING;
+        }
+        break;
+    case BUTTON_FALLING:
+        if (userButton.read() && delayRead(delay)) {
+            currentState = BUTTON_DOWN;
+            buttonPressed();
+        } else {
+            currentState = BUTTON_UP;
+        }
+        break;
+    case BUTTON_DOWN:
+        if (!userButton.read()) {
+            currentState = BUTTON_RAISING;
+        }
+        break;
+    case BUTTON_RAISING:
+        if (!userButton.read() && delayRead(delay)) {
+            currentState = BUTTON_UP;
+        } else {
+            currentState = BUTTON_DOWN;
+        }
+        break;
+    default:
+        assert(0);
+    }
 }
 
 /*

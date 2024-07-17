@@ -11,7 +11,7 @@
  */
 
 #include "stm32f4xx_hal.h"         /**< Biblioteca HAL */
-#include "stm32f4xx_nucleo_144.h"  /**< Biblioteca BSP */
+//#include "stm32f4xx_nucleo_144.h"  /**< Biblioteca BSP */
 
 #include <assert.h>
 #include "delay.h"

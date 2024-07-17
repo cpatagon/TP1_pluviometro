@@ -1,8 +1,9 @@
+#include "mbed.h"
+
 #include <stdint.h>  /* For standard uint32_t types */
 #include <stdbool.h> /* For standard boolean types */
 
 #include "stm32f4xx_hal.h"          /* HAL library inclusion */
-#include "stm32f4xx_nucleo_144.h"   /* BSP library inclusion */
 
 #include "delay.h" /* Inclusion of the file defining delay_t */
 
