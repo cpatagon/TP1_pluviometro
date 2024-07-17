@@ -1,8 +1,8 @@
 /*
  * Nombre del archivo: pluviometer.c
- * Descripción: [Breve descripción del archivo]
+ * Descripción: Implementación de la biblioteca para la detección y reporte de lluvias.
  * Autor: Luis Gómez P.
- * Derechos de Autor: (C) 2023 [Tu nombre o el de tu organización]
+ * Derechos de Autor: (C) 2023 Luis Gómez P.
  * Licencia: GNU General Public License v3.0
  * 
  * Este programa es software libre: puedes redistribuirlo y/o modificarlo
@@ -23,12 +23,11 @@
  */
 
 /** @file
- ** @brief 
+ ** @brief Implementación de la biblioteca para la detección y reporte de lluvias.
  **/
 
 /* === Headers files inclusions =============================================================== */
-
-
+#include "pluviometer.h"
 
 /* === Macros definitions ====================================================================== */
 
@@ -39,22 +38,23 @@
 
 DigitalIn tickRain(SWITCH_TICK_RAIN);  ///< Botón de detección de lluvia
 
-
 int rainfallCount = RAINFALL_COUNT_INI;  ///< Contador de lluvia
 int lastMinute = LAST_MINUTE_INI;  ///< Último minuto
 
 /* === Private function declarations =========================================================== */
 
-
+// Análisis de Datos
 void analyzeRainfall();
 void accumulateRainfall();
+bool hasTimePassedMinutesRTC(int waiting_seconds);
+
+// Actuación 
 void printRain(const char* buffer);
 void printAccumulatedRainfall();
+const char* DateTimeNow(void);
 
-/* === Public variable definitions ============================================================= */
-
-
-/* === Private variable definitions ============================================================ */
+// Variables globales
+BufferedSerial pc(USBTX, USBRX, BAUD_RATE);  ///< Comunicación serial
 
 /* === Private function implementation ========================================================= */
 
@@ -69,7 +69,6 @@ void analyzeRainfall() {
     accumulateRainfall();
     thread_sleep_for(DELAY_BETWEEN_TICK);
 }
-
 
 /**
  * @brief Acumula la cantidad de lluvia detectada
@@ -98,18 +97,18 @@ void printAccumulatedRainfall() {
     struct tm* timeinfo = localtime(&seconds);
     char dateTime[80];
     strftime(dateTime, sizeof(dateTime), DATE_FORMAT, timeinfo);
-    
-    int rainfallInteger = (int)(rainfallCount * MM_PER_TICK);
-    int rainfallDecimal = (int)((rainfallCount * MM_PER_TICK - rainfallInteger) * 100);
-    
+
+    // Calcular la lluvia acumulada en décimas de mm
+    int accumulatedRainfall = rainfallCount * MM_PER_TICK; // MM_PER_TICK es ahora 0.1 para décimas de mm
+
+    // Preparar el buffer para imprimir
     char buffer[100];
-    int len = sprintf(buffer, "%s%s%d.%02d mm\n", 
-                      dateTime, MSG_ACCUMULATED_RAINFALL, rainfallInteger, rainfallDecimal);
+    int len = sprintf(buffer, "%s%s%d.%01d mm\n", 
+                      dateTime, MSG_ACCUMULATED_RAINFALL, accumulatedRainfall / 10, accumulatedRainfall % 10);
     
+    // Imprimir el resultado
     pc.write(buffer, len);
 }
-
-
 
 /* === Public function implementation ========================================================== */
 

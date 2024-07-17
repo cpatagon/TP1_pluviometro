@@ -7,7 +7,6 @@
 
 #include "mbed.h"
 #include "arm_book_lib.h"
-#include "weather_station.h"
 #include "pluviometer.h"
 
 
@@ -44,11 +43,18 @@ int main()
  * @param minutes Cantidad de minutos a verificar
  * @return true si ha pasado el tiempo especificado, false en caso contrario
  */
-bool hasTimePassedMinutesRTC(int minutes) {
+bool hasTimePassedMinutesRTC(int waiting_seconds) {
     static time_t lastTime = 0;
-    time_t currentTime = time(NULL);
+    time_t currentTime;
 
-    if (difftime(currentTime, lastTime) >= minutes * 60) {
+    // Obtener el tiempo actual del RTC
+    currentTime = rtc_read();
+
+    // Calcular la diferencia de tiempo en segundos
+    time_t timeDifference = currentTime - lastTime;
+
+    // Verificar si ha pasado el tiempo especificado
+    if (timeDifference >= waiting_seconds) {
         lastTime = currentTime;
         return true;
     }
@@ -69,5 +75,3 @@ const char* DateTimeNow() {
     strftime(bufferTime, sizeof(bufferTime), TIME_FORMAT, localtime(&seconds));
     return bufferTime;
 }
-
-

@@ -1,8 +1,8 @@
 /*
  * Nombre del archivo: pluviometer.h
- * Descripción: [Breve descripción del archivo]
+ * Descripción: Biblioteca para la detección y reporte de lluvias usando un pluviómetro.
  * Autor: Luis Gómez P.
- * Derechos de Autor: (C) 2023 [Tu nombre o el de tu organización]
+ * Derechos de Autor: (C) 2023 Luis Gómez P.
  * Licencia: GNU General Public License v3.0
  * 
  * Este programa es software libre: puedes redistribuirlo y/o modificarlo
@@ -26,12 +26,13 @@
 #define PLUVIOMETER_H
 
 /** @file
- ** @brief 
+ ** @brief Biblioteca para la detección y reporte de lluvias usando un pluviómetro.
  **/
 
 /* === Headers files inclusions ================================================================ */
 
 #include "mbed.h"
+
 
 /* === Cabecera C++ ============================================================================ */
 
@@ -41,13 +42,13 @@ extern "C" {
 
 /* === Public macros definitions =============================================================== */
 
-  // Constantes de configuración
+// Constantes de configuración
 #define TIME_INI  1593561600  ///< 1 de julio de 2020, 00:00:00
 #define BAUD_RATE 9600  ///< Velocidad de comunicación serial
 #define DELAY_BETWEEN_TICK 500  ///< 500 ms
 #define SWITCH_TICK_RAIN BUTTON1  ///< Botón para detectar lluvia
-#define RAINFALL_CHECK_INTERVAL 1  ///< Intervalo de verificación de lluvia en minutos
-#define MM_PER_TICK 0.2f  ///< 0.2 mm de agua por tick
+#define RAINFALL_CHECK_INTERVAL 60  ///< Intervalo de verificación de lluvia en segundos
+#define MM_PER_TICK 2  ///< 2 décimas de mm de agua por tick
 #define RAINFALL_COUNT_INI 0  ///< Contador de lluvia inicial
 #define LAST_MINUTE_INI -1  ///< Último minuto inicial
 
@@ -57,27 +58,25 @@ extern "C" {
 #define TIME_FORMAT "%Y-%m-%d %H:%M:%S"  ///< Formato de tiempo completo
 #define DATE_FORMAT "%Y-%m-%d %H:%M"  ///< Formato de fecha y hora
 
-
-  
 /* === Public data type declarations =========================================================== */
 
 /* === Public variable declarations ============================================================ */
-DigitalOut alarmLed(LED1);  ///< LED de alarma
-DigitalOut tickLed(LED2);  ///< LED de tick
-
+extern DigitalOut alarmLed;  ///< LED de alarma
+extern DigitalOut tickLed;  ///< LED de tick
 
 // Variables globales
-BufferedSerial pc(USBTX, USBRX, BAUD_RATE);  ///< Comunicación serial
-
+extern BufferedSerial pc;  ///< Comunicación serial
 
 /* === Public function declarations ============================================================ */
 
-
+// Sensores
 void initializeSensors();
 bool isRaining();
-void actOnRainfall()
+
+// Actuación
+void actOnRainfall();
 void reportRainfall();
-  
+
 /* === End of documentation ==================================================================== */
 
 #ifdef __cplusplus
