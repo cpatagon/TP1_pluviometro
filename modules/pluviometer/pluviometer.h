@@ -51,12 +51,14 @@ extern "C" {
 #define MM_PER_TICK 2  ///< 2 décimas de mm de agua por tick
 #define RAINFALL_COUNT_INI 0  ///< Contador de lluvia inicial
 #define LAST_MINUTE_INI -1  ///< Último minuto inicial
+#define DEBOUNCE_TIME 80 ///< tiempo del antirrebote
 
 // Mensajes y formatos
 #define MSG_RAIN_DETECTED " - Rain detected\r\n"  ///< Mensaje de lluvia detectada
 #define MSG_ACCUMULATED_RAINFALL " - Accumulated rainfall: "  ///< Mensaje de lluvia acumulada
 #define TIME_FORMAT "%Y-%m-%d %H:%M:%S"  ///< Formato de tiempo completo
 #define DATE_FORMAT "%Y-%m-%d %H:%M"  ///< Formato de fecha y hora
+
 
 /* === Public data type declarations =========================================================== */
 

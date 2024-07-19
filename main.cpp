@@ -1,4 +1,5 @@
-/** 
+/**
+ * @Autor Luis Gómez
  * @file pluviómetro.cpp
  * @brief Proyecto pluviómetro
  * 
@@ -12,17 +13,10 @@
 #define RAINFALL_CHECK_INTERVAL 60  ///< Intervalo de verificación de lluvia en segundos
 
 
-
-
-
-
 int main()
 {
     initializeSensors();
-    initializeDebounce();
-
     while (true) {
-      updateDebounce();
         if (isRaining()) {
             actOnRainfall();
         } else {

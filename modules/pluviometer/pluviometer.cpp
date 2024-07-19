@@ -70,17 +70,38 @@ BufferedSerial pc(USBTX, USBRX, BAUD_RATE);  ///< Comunicación serial
 
 
 /* === Private function implementation ========================================================= */
-
+/**
+ * @brief Inicializa el sistema de debounce para el pluviómetro
+ *
+ * Esta función inicializa la máquina de estados finitos (FSM) para el debounce
+ * y configura el delay asociado con un tiempo de 40 ms.
+ *
+ * @note El tiempo de debounce está fijado en 40 ms. Si se necesita cambiar,
+ * modifica el valor pasado a delayInit().
+ *
+ * @see debounceFSM_init()
+ * @see delayInit()
+ */
 void initializeDebounce() {
     debounceFSM_init();
-    delayInit(&debounceDelay, 40);  // 40 ms de debounce
+    delayInit(&debounceDelay, DEBOUNCE_TIME);  // 40 ms de debounce
 }
 
-
+/**
+ * @brief Actualiza el estado del sistema de debounce
+ *
+ * Esta función debe ser llamada periódicamente para actualizar
+ * el estado de la máquina de estados finitos (FSM) del debounce.
+ * Maneja la lógica para filtrar rebotes en la señal de entrada.
+ *
+ * @note Es importante llamar a esta función con la frecuencia adecuada
+ * para asegurar un correcto funcionamiento del debounce.
+ *
+ * @see debounceFSM_update()
+ */
 void updateDebounce(){
   debounceFSM_update(&debounceDelay);
 }
-
 
 /**
  * @brief Analiza la lluvia detectada
@@ -96,7 +117,6 @@ void analyzeRainfall() {
         printRain(currentTime);
         accumulateRainfall();
         analyzing = true;
-        delayWrite(&analyzeDelay, DELAY_BETWEEN_TICK);  // Reinicia el delay
     } else if (delayRead(&analyzeDelay)) {
         // El delay ha terminado
         analyzing = false;
@@ -163,11 +183,12 @@ const char* DateTimeNow() {
  * Configura el modo del botón de detección de lluvia y apaga los LEDs.
  */
 void initializeSensors() {
+    void initializeDebounce();
     tickRain.mode(PullDown);
     alarmLed = OFF;
     tickLed = OFF;
     set_time(TIME_INI); ///< Configurar la fecha y hora inicial
-    delayInit(&analyzeDelay, DELAY_BETWEEN_TICK);
+    //delayInit(&analyzeDelay, DELAY_BETWEEN_TICK);
 }
 
 /**
@@ -176,6 +197,7 @@ void initializeSensors() {
  * @return true si el botón de detección de lluvia está activado, false en caso contrario
  */
 bool isRaining() {
+    updateDebounce();
     return readKey();
 }
 
