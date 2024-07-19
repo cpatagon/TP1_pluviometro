@@ -75,6 +75,7 @@ extern BufferedSerial pc;  ///< Comunicación serial
 // Sensores
 void initializeSensors();
 bool isRaining();
+bool hasTimePassedMinutesRTC(int minutes);
 
 // Actuación
 void actOnRainfall();

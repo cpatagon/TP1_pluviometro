@@ -12,8 +12,7 @@
 #define RAINFALL_CHECK_INTERVAL 60  ///< Intervalo de verificación de lluvia en segundos
 
 
-// Sensores
-bool hasTimePassedMinutesRTC(int minutes);
+
 
 
 
@@ -37,31 +36,6 @@ int main()
     }
 }
 
-
-/**
- * @brief Verifica si ha pasado el tiempo especificado en minutos
- * 
- * @param minutes Cantidad de minutos a verificar
- * @return true si ha pasado el tiempo especificado, false en caso contrario
- */
-bool hasTimePassedMinutesRTC(int waiting_seconds) {
-    static time_t lastTime = 0;
-    time_t currentTime;
-
-    // Obtener el tiempo actual del RTC
-    currentTime = rtc_read();
-
-    // Calcular la diferencia de tiempo en segundos
-    time_t timeDifference = currentTime - lastTime;
-
-    // Verificar si ha pasado el tiempo especificado
-    if (timeDifference >= waiting_seconds) {
-        lastTime = currentTime;
-        return true;
-    }
-
-    return false;
-}
 
 
 
