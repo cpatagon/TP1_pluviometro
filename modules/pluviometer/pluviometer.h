@@ -21,72 +21,52 @@
  * SPDX-License-Identifier: GPL-3.0-only
  *
  */
-
 #ifndef PLUVIOMETER_H
 #define PLUVIOMETER_H
 
-/** @file
- ** @brief Biblioteca para la detección y reporte de lluvias usando un pluviómetro.
- **/
-
-/* === Headers files inclusions ================================================================ */
-
 #include "mbed.h"
-#include "debounce.h"
 
-/* === Cabecera C++ ============================================================================ */
+// Constantes
+#define TICK_RAIN_TENTHS_MM 2   // Cada tick representa 2 décimas de mm de lluvia caída
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+// Estados del pluviómetro
+typedef enum {
+    INACTIVO,
+    DETECTANDO_LLUVIA,
+    ACUMULANDO,
+    REPORTANDO
+} PluviometerState;
 
-/* === Public macros definitions =============================================================== */
+typedef struct {
+    PluviometerState state;
+    uint32_t report_interval; // Intervalo de reporte en minutos
+    uint32_t tick_count;
+    uint32_t accumulated_rain_tenths_mm;
+    time_t last_report_time;
+    bool debounce_active;
+    DigitalOut *led;
+    InterruptIn *button;
+    Ticker ticker;
+    Timeout debounce_timeout;
+    Timer rain_timer;
+    BufferedSerial *serial;
+    EventQueue *event_queue;
+    Thread *event_thread;
+} Pluviometer;
 
-// Constantes de configuración
-#define TIME_INI  1593561600  ///< 1 de julio de 2020, 00:00:00
-#define BAUD_RATE 9600  ///< Velocidad de comunicación serial
-#define DELAY_BETWEEN_TICK 500  ///< 500 ms
-#define SWITCH_TICK_RAIN BUTTON1  ///< Botón para detectar lluvia
+// Función de inicialización
+void Pluviometer_init(Pluviometer* pluvio, PinName button_pin, PinName led_pin, PinName tx_pin, PinName rx_pin);
 
-#define MM_PER_TICK 2  ///< 2 décimas de mm de agua por tick
-#define RAINFALL_COUNT_INI 0  ///< Contador de lluvia inicial
-#define LAST_MINUTE_INI -1  ///< Último minuto inicial
-#define DEBOUNCE_TIME 80 ///< tiempo del antirrebote
+// Función para actualizar el estado del pluviómetro
+void Pluviometer_update(Pluviometer* pluvio);
 
-// Mensajes y formatos
-#define MSG_RAIN_DETECTED " - Rain detected\r\n"  ///< Mensaje de lluvia detectada
-#define MSG_ACCUMULATED_RAINFALL " - Accumulated rainfall: "  ///< Mensaje de lluvia acumulada
-#define TIME_FORMAT "%Y-%m-%d %H:%M:%S"  ///< Formato de tiempo completo
-#define DATE_FORMAT "%Y-%m-%d %H:%M"  ///< Formato de fecha y hora
+// Función para obtener la cantidad de lluvia acumulada en décimas de mm
+uint32_t Pluviometer_get_rainfall(Pluviometer* pluvio);
 
+// Función para configurar el intervalo de reporte (en minutos)
+void Pluviometer_set_report_interval(Pluviometer* pluvio, uint32_t interval);
 
-/* === Public data type declarations =========================================================== */
+// Función para configurar el reloj con la fecha y hora actual
+void Pluviometer_set_current_time(time_t current_time);
 
-/* === Public variable declarations ============================================================ */
-void initializeDebounce();
-void updateDebounce();
-
-extern DigitalOut alarmLed;  ///< LED de alarma
-extern DigitalOut tickLed;  ///< LED de tick
-
-// Variables globales
-extern BufferedSerial pc;  ///< Comunicación serial
-
-/* === Public function declarations ============================================================ */
-
-// Sensores
-void initializeSensors();
-bool isRaining();
-bool hasTimePassedMinutesRTC(int minutes);
-
-// Actuación
-void actOnRainfall();
-void reportRainfall();
-
-/* === End of documentation ==================================================================== */
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* PLUVIOMETER_H */
+#endif // PLUVIOMETER_H

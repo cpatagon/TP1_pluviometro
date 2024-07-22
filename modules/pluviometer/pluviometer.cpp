@@ -25,228 +25,131 @@
 /** @file
  ** @brief Implementación de la biblioteca para la detección y reporte de lluvias.
  **/
-
-/* === Headers files inclusions =============================================================== */
-#include "mbed.h"
-#include "arm_book_lib.h"
-#include "debounce.h"
 #include "pluviometer.h"
 
-/* === Macros definitions ====================================================================== */
+// Prototipos de funciones internas
+static void detect_rain(Pluviometer* pluvio);
+static void accumulate_rain(Pluviometer* pluvio);
+static void report_rain(Pluviometer* pluvio);
+static void button_pressed(Pluviometer* pluvio);
+static void debounce_finished(Pluviometer* pluvio);
+static void print_report(Pluviometer* pluvio);
 
-
-/* === Private data type declarations ========================================================== */
-
-/* === Private variable declarations =========================================================== */
-
-DigitalOut alarmLed(LED1);
-DigitalOut tickLed(LED2);
-DigitalIn tickRain(SWITCH_TICK_RAIN);  ///< Botón de detección de lluvia
-
-int rainfallCount = RAINFALL_COUNT_INI;  ///< Contador de lluvia
-int lastMinute = LAST_MINUTE_INI;  ///< Último minuto
-
-static delay_t debounceDelay;
-static bool buttonPressed = false;
-static delay_t analyzeDelay;
-
-
-/* === Private function declarations =========================================================== */
-
-// Análisis de Datos
-void analyzeRainfall();
-void accumulateRainfall();
-bool hasTimePassedMinutesRTC(int waiting_seconds);
-
-// Actuación 
-void printRain(const char* buffer);
-void printAccumulatedRainfall();
-const char* DateTimeNow(void);
-
-// Variables globales
-BufferedSerial pc(USBTX, USBRX, BAUD_RATE);  ///< Comunicación serial
-
-
-
-
-/* === Private function implementation ========================================================= */
-/**
- * @brief Inicializa el sistema de debounce para el pluviómetro
- *
- * Esta función inicializa la máquina de estados finitos (FSM) para el debounce
- * y configura el delay asociado con un tiempo de 40 ms.
- *
- * @note El tiempo de debounce está fijado en 40 ms. Si se necesita cambiar,
- * modifica el valor pasado a delayInit().
- *
- * @see debounceFSM_init()
- * @see delayInit()
- */
-void initializeDebounce() {
-    debounceFSM_init();
-    delayInit(&debounceDelay, DEBOUNCE_TIME);  // 40 ms de debounce
+// Función de inicialización
+void Pluviometer_init(Pluviometer* pluvio, PinName button_pin, PinName led_pin, PinName tx_pin, PinName rx_pin) {
+    pluvio->state = INACTIVO;
+    pluvio->report_interval = 1; // Por defecto 1 minuto
+    pluvio->tick_count = 0;
+    pluvio->accumulated_rain_tenths_mm = 0;
+    pluvio->debounce_active = false;
+    pluvio->led = new DigitalOut(led_pin);
+    pluvio->button = new InterruptIn(button_pin);
+    pluvio->button->fall(callback(button_pressed, pluvio));
+    pluvio->rain_timer.start();
+    pluvio->serial = new BufferedSerial(tx_pin, rx_pin, 9600);
+    pluvio->event_queue = mbed_event_queue();
+    pluvio->event_thread = new Thread(osPriorityNormal, 1024);
+    pluvio->event_thread->start(callback(pluvio->event_queue, &EventQueue::dispatch_forever));
+    time(&pluvio->last_report_time); // Capturar el tiempo de inicio
+    pluvio->ticker.attach(callback(report_rain, pluvio), std::chrono::minutes(1)); // Llamar cada minuto
 }
 
-/**
- * @brief Actualiza el estado del sistema de debounce
- *
- * Esta función debe ser llamada periódicamente para actualizar
- * el estado de la máquina de estados finitos (FSM) del debounce.
- * Maneja la lógica para filtrar rebotes en la señal de entrada.
- *
- * @note Es importante llamar a esta función con la frecuencia adecuada
- * para asegurar un correcto funcionamiento del debounce.
- *
- * @see debounceFSM_update()
- */
-void updateDebounce(){
-  debounceFSM_update(&debounceDelay);
-}
-
-/**
- * @brief Analiza la lluvia detectada
- * 
- * Imprime la hora actual y acumula la lluvia detectada.
- */
-void analyzeRainfall() {
-  static bool analyzing = false;
-
-    if (!analyzing) {
-        // Comenzar el análisis
-        const char* currentTime = DateTimeNow();
-        printRain(currentTime);
-        accumulateRainfall();
-        analyzing = true;
-    } else if (delayRead(&analyzeDelay)) {
-        // El delay ha terminado
-        analyzing = false;
+// Función para actualizar el estado del pluviómetro
+void Pluviometer_update(Pluviometer* pluvio) {
+    switch (pluvio->state) {
+        case INACTIVO:
+            *(pluvio->led) = 0;
+            break;
+        case DETECTANDO_LLUVIA:
+            *(pluvio->led) = 1;
+            detect_rain(pluvio);
+            break;
+        case ACUMULANDO:
+            accumulate_rain(pluvio);
+            break;
+        case REPORTANDO:
+            report_rain(pluvio);
+            break;
     }
 }
 
-/**
- * @brief Acumula la cantidad de lluvia detectada
- */
-void accumulateRainfall() {
-    rainfallCount++;
+// Función para obtener la cantidad de lluvia acumulada en décimas de mm
+uint32_t Pluviometer_get_rainfall(Pluviometer* pluvio) {
+    return pluvio->accumulated_rain_tenths_mm;
 }
 
-/**
- * @brief Imprime un mensaje de detección de lluvia
- * 
- * @param buffer Cadena de caracteres con la hora actual
- */
-void printRain(const char* buffer) {
-    pc.write(buffer, strlen(buffer));
-    pc.write(MSG_RAIN_DETECTED, strlen(MSG_RAIN_DETECTED));
+// Función para configurar el intervalo de reporte
+void Pluviometer_set_report_interval(Pluviometer* pluvio, uint32_t interval) {
+    pluvio->report_interval = interval;
 }
 
-/**
- * @brief Imprime la cantidad de lluvia acumulada
- * 
- * Calcula e imprime la cantidad de lluvia acumulada en el formato "YYYY-MM-DD HH:MM - Accumulated rainfall: X.XX mm".
- */
-void printAccumulatedRainfall() {
-    time_t seconds = time(NULL);
-    struct tm* timeinfo = localtime(&seconds);
-    char dateTime[80];
-    strftime(dateTime, sizeof(dateTime), DATE_FORMAT, timeinfo);
+// Función para configurar el reloj con la fecha y hora actual
+void Pluviometer_set_current_time(time_t current_time) {
+    set_time(current_time);
+}
 
-    // Calcular la lluvia acumulada en décimas de mm
-    int accumulatedRainfall = rainfallCount * MM_PER_TICK; // MM_PER_TICK es ahora 0.1 para décimas de mm
+// Función para detectar lluvia
+static void detect_rain(Pluviometer* pluvio) {
+    if (pluvio->tick_count > 0) {
+        pluvio->state = ACUMULANDO;
+    }
+}
 
-    // Preparar el buffer para imprimir
-    char buffer[100];
-    int len = sprintf(buffer, "%s%s%d.%01d mm\n", 
-                      dateTime, MSG_ACCUMULATED_RAINFALL, accumulatedRainfall / 10, accumulatedRainfall % 10);
+// Función para acumular lluvia
+static void accumulate_rain(Pluviometer* pluvio) {
+    pluvio->accumulated_rain_tenths_mm += pluvio->tick_count * TICK_RAIN_TENTHS_MM;
+    pluvio->tick_count = 0;
+    pluvio->state = INACTIVO;
+}
+
+// Función para reportar lluvia
+static void report_rain(Pluviometer* pluvio) {
+    pluvio->event_queue->call(print_report, pluvio);
+    pluvio->accumulated_rain_tenths_mm = 0;
+    pluvio->last_report_time = time(NULL);
+
+    // Programar el siguiente reporte
+    pluvio->ticker.attach(callback(report_rain, pluvio), std::chrono::minutes(pluvio->report_interval));
+}
+
+// Función para imprimir el reporte
+static void print_report(Pluviometer* pluvio) {
+    time_t current_time;
+    time(&current_time);
+
+    struct tm *timeinfo = localtime(&current_time);
+    char buffer[128];
+    int length = snprintf(buffer, sizeof(buffer), "Rainfall: %u tenths of mm at %04d-%02d-%02d %02d:%02d\n", 
+                          pluvio->accumulated_rain_tenths_mm, 
+                          timeinfo->tm_year + 1900, 
+                          timeinfo->tm_mon + 1, 
+                          timeinfo->tm_mday, 
+                          timeinfo->tm_hour, 
+                          timeinfo->tm_min);
     
-    // Imprimir el resultado
-    pc.write(buffer, len);
-}
-
-/**
- * @brief Obtiene la fecha y hora actual
- * 
- * @return Cadena de caracteres con la fecha y hora actual en formato "%Y-%m-%d %H:%M:%S"
- */
-const char* DateTimeNow() {
-    time_t seconds = time(NULL);
-    static char bufferTime[80];
-    strftime(bufferTime, sizeof(bufferTime), TIME_FORMAT, localtime(&seconds));
-    return bufferTime;
-}
-
-/* === Public function implementation ========================================================== */
-
-/**
- * @brief Inicializa los sensores
- * 
- * Configura el modo del botón de detección de lluvia y apaga los LEDs.
- */
-void initializeSensors() {
-    void initializeDebounce();
-    tickRain.mode(PullDown);
-    alarmLed = OFF;
-    tickLed = OFF;
-    set_time(TIME_INI); ///< Configurar la fecha y hora inicial
-    //delayInit(&analyzeDelay, DELAY_BETWEEN_TICK);
-}
-
-/**
- * @brief Verifica si está lloviendo
- * 
- * @return true si el botón de detección de lluvia está activado, false en caso contrario
- */
-bool isRaining() {
-    updateDebounce();
-    return readKey();
-}
-
-/**
- * @brief Actúa en base a la detección de lluvia
- * 
- * Enciende los LEDs de alarma y tick, y analiza la lluvia detectada.
- */
-void actOnRainfall() {
-    alarmLed = ON;
-    tickLed = ON;
-    analyzeRainfall();
-}
-
-/**
- * @brief Reporta la lluvia acumulada
- * 
- * Imprime la cantidad de lluvia acumulada y resetea el contador de lluvia.
- */
-void reportRainfall() {
-    printAccumulatedRainfall();
-    rainfallCount = RAINFALL_COUNT_INI;
-}
-
-
-/**
- * @brief Verifica si ha pasado el tiempo especificado en minutos
- * 
- * @param minutes Cantidad de minutos a verificar
- * @return true si ha pasado el tiempo especificado, false en caso contrario
- */
-bool hasTimePassedMinutesRTC(int waiting_seconds) {
-    static time_t lastTime = 0;
-    time_t currentTime;
-
-    // Obtener el tiempo actual del RTC
-    currentTime = rtc_read();
-
-    // Calcular la diferencia de tiempo en segundos
-    time_t timeDifference = currentTime - lastTime;
-
-    // Verificar si ha pasado el tiempo especificado
-    if (timeDifference >= waiting_seconds) {
-        lastTime = currentTime;
-        return true;
+    if (length > 0) {
+        pluvio->serial->write(buffer, length);
     }
-
-    return false;
 }
 
+// Función que se llama cuando se presiona el botón
+static void button_pressed(Pluviometer* pluvio) {
+    if (!pluvio->debounce_active) {
+        pluvio->debounce_active = true;
+        pluvio->debounce_timeout.attach(callback(debounce_finished, pluvio), std::chrono::milliseconds(50)); // 50 ms para el antirrebote
+        pluvio->tick_count++;
+        pluvio->state = DETECTANDO_LLUVIA;
+    }
+}
 
-/* === End of documentation ==================================================================== */
+// Función que se llama cuando termina el antirrebote
+static void debounce_finished(Pluviometer* pluvio) {
+    pluvio->debounce_active = false;
+    pluvio->state = INACTIVO;
+}
+
+// Función para resetear el pluviómetro
+static void reset(Pluviometer* pluvio) {
+    pluvio->tick_count = 0;
+    pluvio->accumulated_rain_tenths_mm = 0;
+}
