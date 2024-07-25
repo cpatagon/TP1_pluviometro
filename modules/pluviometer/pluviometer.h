@@ -26,47 +26,53 @@
 
 #include "mbed.h"
 
-// Constantes
-#define TICK_RAIN_TENTHS_MM 2   // Cada tick representa 2 décimas de mm de lluvia caída
 
-// Estados del pluviómetro
+// Descomentar la siguiente línea para habilitar la impresión de estados
+// #define DEBUG_PRINT_ESTADOS
+
+// Definición de los estados del pluviómetro
 typedef enum {
-    INACTIVO,
+    ESCUCHANDO,
     DETECTANDO_LLUVIA,
     ACUMULANDO,
     REPORTANDO
-} PluviometerState;
+} Estado;
 
+// Estructura del pluviómetro
 typedef struct {
-    PluviometerState state;
-    uint32_t report_interval; // Intervalo de reporte en minutos
-    uint32_t tick_count;
-    uint32_t accumulated_rain_tenths_mm;
-    time_t last_report_time;
-    bool debounce_active;
-    DigitalOut *led;
-    InterruptIn *button;
-    Ticker ticker;
-    Timeout debounce_timeout;
-    Timer rain_timer;
-    BufferedSerial *serial;
-    EventQueue *event_queue;
-    Thread *event_thread;
-} Pluviometer;
+    InterruptIn* boton;
+    DigitalOut* led;
+    BufferedSerial* serial;
+    Timer* timer;
+    Timer* debounce_timer; // Timer para el antirrebote
+    Estado estado;
+    int ticks;
+    int intervalo;
+    time_t tiempo_actual;
+    volatile bool bandera_precipitacion;
+    char buffer[100];
+    volatile bool report_ready;
+} Pluviometro;
 
-// Función de inicialización
-void Pluviometer_init(Pluviometer* pluvio, PinName button_pin, PinName led_pin, PinName tx_pin, PinName rx_pin);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// Función para actualizar el estado del pluviómetro
-void Pluviometer_update(Pluviometer* pluvio);
+void pluviometro_init(Pluviometro* p, PinName pin_boton, PinName pin_led, PinName tx, PinName rx);
+void pluviometro_actualizar(Pluviometro* p);
+void pluviometro_reportar_lluvia(Pluviometro* p);
+void pluviometro_configurar_intervalo(Pluviometro* p, int segundos);
+void pluviometro_configurar_fecha_hora(Pluviometro* p, int year, int month, int day, int hours, int minutes, int seconds);
+void pluviometro_mensaje_inicio(Pluviometro* p);
+const char* estado_a_cadena(Estado estado);
+void cambiar_estado(Pluviometro* p, Estado nuevo_estado);
+void manejar_interrupcion(Pluviometro* p);
+void iniciar_acumulacion(Pluviometro* p);
+void finalizar_acumulacion(Pluviometro* p);
 
-// Función para obtener la cantidad de lluvia acumulada en décimas de mm
-uint32_t Pluviometer_get_rainfall(Pluviometer* pluvio);
-
-// Función para configurar el intervalo de reporte (en minutos)
-void Pluviometer_set_report_interval(Pluviometer* pluvio, uint32_t interval);
-
-// Función para configurar el reloj con la fecha y hora actual
-void Pluviometer_set_current_time(time_t current_time);
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PLUVIOMETER_H
+
