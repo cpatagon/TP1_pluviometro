@@ -9,6 +9,9 @@ Este proyecto implementa un sistema de pluviómetro utilizando la plataforma MBE
 ![Esquema de un pluviómetro de balancín](doc/fig/pluviometro.png)
 *Figura 1: Esquema de un pluviómetro de balancín (fuente: Segerer et al., 2006)*
 
+
+
+
 ## Características
 
 - Detección precisa de precipitación mediante sensor de ticks.
@@ -38,6 +41,8 @@ El software está organizado en varios módulos:
 - `pluviometer.c`: Implementación de las funciones del pluviómetro.
 - `main.cpp`: Programa principal que inicializa y ejecuta el sistema.
 
+
+
 ### Funciones Principales
 
 - `pluviometro_init()`: Inicializa el pluviómetro.
@@ -46,6 +51,12 @@ El software está organizado en varios módulos:
 - `pluviometro_configurar_intervalo()`: Configura el intervalo de reporte.
 - `pluviometro_configurar_fecha_hora()`: Configura la fecha y hora del sistema.
 - `pluviometro_configurar_ubicacion()`: Configura las coordenadas UTM del pluviómetro.
+
+### Maquina de estados Finitos (FSM)
+
+![FSM](doc/fig/diagrama_FSM_pluviometro.png)
+*Figura 3: Diagrama FSM del funcionamiento del pluviómetro*
+
 
 ## Uso
 
