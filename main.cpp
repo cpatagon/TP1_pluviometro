@@ -1,14 +1,43 @@
+/*
+ * Nombre del archivo: main.cpp
+ * Descripción: Implementación de reporte de lluvias usando un pluviómetro.
+ * Autor: Luis Gómez P.
+ * Derechos de Autor: (C) 2023 Luis Gómez P.
+ * Licencia: GNU General Public License v3.0
+ * 
+ * Este programa es software libre: puedes redistribuirlo y/o modificarlo
+ * bajo los términos de la Licencia Pública General GNU publicada por
+ * la Free Software Foundation, ya sea la versión 3 de la Licencia, o
+ * (a tu elección) cualquier versión posterior.
+ * 
+ * Este programa se distribuye con la esperanza de que sea útil,
+ * pero SIN NINGUNA GARANTÍA; sin siquiera la garantía implícita
+ * de COMERCIABILIDAD o APTITUD PARA UN PROPÓSITO PARTICULAR. Ver la
+ * Licencia Pública General GNU para más detalles.
+ * 
+ * Deberías haber recibido una copia de la Licencia Pública General GNU
+ * junto con este programa. Si no es así, visita <http://www.gnu.org/licenses/>.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only
+ *
+ */
+ 
 #include "mbed.h"
 #include "pluviometer.h"
 
+#define TIEMPO_REPORTE_PLUVIOMETRO 60 // en segundos
+#define UBICACION_ESTE_UTM "691249.92"
+#define UBICACION_NORTE_UTM "5711836.83"
+
 int main() {
     Pluviometro pluviometro;
-    pluviometro_init(&pluviometro, USER_BUTTON, LED1, USBTX, USBRX);
+
     pluviometro_configurar_fecha_hora(&pluviometro, 2024, 7, 21, 12, 0, 0);
-    pluviometro_configurar_intervalo(&pluviometro, 60); // Intervalo de 1 minuto
+    pluviometro_configurar_intervalo(&pluviometro, TIEMPO_REPORTE_PLUVIOMETRO );
+    pluviometro_configurar_ubicacion(&pluviometro,  UBICACION_ESTE_UTM, UBICACION_NORTE_UTM ); 
+    pluviometro_init(&pluviometro, USER_BUTTON, LED1, USBTX, USBRX, TIEMPO_REPORTE_PLUVIOMETRO);
     
     while (1) {
         pluviometro_actualizar(&pluviometro);
-        wait_us(10000); // Esperar 10 ms
     }
 }
