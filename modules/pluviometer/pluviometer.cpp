@@ -23,124 +23,57 @@
  */
 #include "mbed.h"
 #include "pluviometer.h"
+#include <cstdint>
 #include <string.h>
 #include <cstdio>
 #include <cstring>
-#include <chrono>
 
 #define DEBOUNCE_TIME_MS 100
 #define TICK_VALUE 2 // 2 décimas de mm por tick
 
 
-/**
- * @brief Imprime el mensaje de inicio del pluviómetro.
- *
- * Esta función genera y muestra un mensaje de inicio que incluye
- * información sobre la configuración inicial del pluviómetro.
- *
- * @param p Puntero a la estructura Pluviometro.
- */
+#define REINICIAR_TICKS_CICLO(p) ((p)->ticks = 0)
+#define NUMERO_TICKS_CICLO(p) ((p)->ticks)
+
+// Descomentar la siguiente línea para habilitar la impresión de estados
+// (solo en modo prueba)
+#define DEBUG_PRINT_ESTADOS
+
+#ifdef DEBUG_PRINT_ESTADOS
+    static void debug_print(Pluviometro* p, const char* mensaje);
+#endif
+
 static void pluviometro_mensaje_inicio(Pluviometro* p);
-
-/**
- * @brief Genera y envía un reporte de lluvia.
- *
- * Esta función calcula la cantidad de lluvia acumulada y envía
- * un reporte a través de la interfaz serial.
- *
- * @param p Puntero a la estructura Pluviometro.
- */
-static void pluviometro_reportar_lluvia(Pluviometro* p);
-
-/**
- * @brief Convierte un estado del pluviómetro a su representación en cadena.
- *
- * @param estado El estado del pluviómetro a convertir.
- * @return const char* Cadena que representa el estado.
- */
 static const char* estado_a_cadena(Estado estado);
-
-/**
- * @brief Cambia el estado del pluviómetro.
- *
- * Esta función actualiza el estado del pluviómetro y realiza
- * las acciones necesarias asociadas al cambio de estado.
- *
- * @param p Puntero a la estructura Pluviometro.
- * @param nuevo_estado El nuevo estado al que se cambiará.
- */
 static void cambiar_estado(Pluviometro* p, Estado nuevo_estado);
-
-/**
- * @brief Maneja la interrupción generada por la detección de lluvia.
- *
- * Esta función se llama cuando se detecta una precipitación y
- * actualiza los contadores y estados del pluviómetro.
- *
- * @param p Puntero a la estructura Pluviometro.
- */
 static void manejar_interrupcion(Pluviometro* p);
-
-/**
- * @brief Inicia el proceso de acumulación de lluvia.
- *
- * Esta función se llama cuando se comienza a detectar lluvia
- * y prepara el pluviómetro para acumular datos.
- *
- * @param p Puntero a la estructura Pluviometro.
- */
 static void iniciar_acumulacion(Pluviometro* p);
-
-/**
- * @brief Finaliza el proceso de acumulación de lluvia.
- *
- * Esta función se llama cuando se deja de detectar lluvia o
- * cuando se cumple el intervalo de reporte.
- *
- * @param p Puntero a la estructura Pluviometro.
- */
 static void finalizar_acumulacion(Pluviometro* p);
-
-/**
- * @brief Imprime la cabecera de los datos del pluviómetro.
- *
- * Esta función genera y envía una cabecera que describe los campos
- * de los datos que se reportarán.
- *
- * @param p Puntero a la estructura Pluviometro.
- */
 static void imprimir_cabecera_datos(Pluviometro* p);
-
-/**
- * @brief Obtiene la fecha y hora actual como una cadena formateada.
- *
- * @return char* Cadena con la fecha y hora actual en formato "YYYY-MM-DD HH:MM:SS".
- */
 static char* obtener_fecha_hora_actual(void);
-
-/**
- * @brief Función de callback para el reporte periódico.
- *
- * Esta función se llama periódicamente para indicar que es hora de generar un reporte.
- *
- * @param context Puntero al contexto (estructura Pluviometro).
- */
 static void callback_reporte(void* context);
-
-/**
- * @brief Manejador de la interrupción del botón (ISR).
- *
- * Esta función se llama cuando se detecta una pulsación del botón,
- * indicando una precipitación.
- *
- * @param context Puntero al contexto (estructura Pluviometro).
- */
 static void boton_isr(void* context);
+static void enviar_uart(Pluviometro* p);
+static void reiniciar_tiempo_ciclo(Pluviometro* p);
+
+// Calcula la lluvia acumulada
+static int32_t calcular_lluvia_acumulada(Pluviometro* p);
+
+// Genera el string del reporte
+static void reportar_lluvia(Pluviometro* p);
+
+
+static int32_t calcular_lluvia_acumulada(Pluviometro* p) {
+    return NUMERO_TICKS_CICLO(p) * TICK_VALUE;   // Asumiendo que TICK_VALUE es esta en decima de mm
+}
 
 
 void callback_reporte(void* context) {
     Pluviometro* p = (Pluviometro*)context;
     p->flag_reporte = true;
+    #ifdef DEBUG_PRINT_ESTADOS
+        debug_print(p, "Flag de reporte activado\n");
+    #endif
 }
 
 void boton_isr(void* context) {
@@ -166,7 +99,7 @@ void pluviometro_init(Pluviometro* p, PinName pin_boton, PinName pin_led, PinNam
     p->debounce_timer = new Timer();
 
     p->estado = ESCUCHANDO;
-    p->ticks = 0;
+    REINICIAR_TICKS_CICLO(p);
 
     p->bandera_precipitacion = false;
     p->debounce_timer->start();
@@ -213,12 +146,28 @@ void pluviometro_actualizar(Pluviometro* p) {
             break;
 
         case REPORTANDO:
+            #ifdef DEBUG_PRINT_ESTADOS
+                debug_print(p, "Entrando en estado REPORTANDO\n");
+            #endif
             finalizar_acumulacion(p);
-            pluviometro_reportar_lluvia(p);
-            p->timer->reset();
+            reportar_lluvia(p);
+            enviar_uart(p);
+            reiniciar_tiempo_ciclo(p);
+            REINICIAR_TICKS_CICLO(p);
             cambiar_estado(p, ESCUCHANDO);
             break;
     }
+}
+
+
+
+
+void reiniciar_tiempo_ciclo(Pluviometro* p){
+    p->timer->reset();
+}
+
+void suma_ticks_ciclo(Pluviometro* p){
+    p->ticks++;
 }
 
 
@@ -235,9 +184,9 @@ char* obtener_fecha_hora_actual() {
     return buffer;
 }
 
-void pluviometro_reportar_lluvia(Pluviometro* p) {
+static void reportar_lluvia(Pluviometro* p) {
     char* fecha_hora = obtener_fecha_hora_actual();
-    int lluvia_acumulada = p->ticks * TICK_VALUE;
+    int lluvia_acumulada = calcular_lluvia_acumulada(p);
     
     snprintf(p->buffer, sizeof(p->buffer),
              "%s, %d.%d\n",
@@ -245,10 +194,17 @@ void pluviometro_reportar_lluvia(Pluviometro* p) {
              lluvia_acumulada / 10,
              lluvia_acumulada % 10);
     
-    p->serial->write(p->buffer, strlen(p->buffer));
-    
-    p->ticks = 0;
+    #ifdef DEBUG_PRINT_ESTADOS
+        debug_print(p, "Prueba reporte_lluvia: ");
+        debug_print(p, p->buffer);
+    #endif
 }
+
+static void enviar_uart(Pluviometro* p) {
+    p->serial->write(p->buffer, strlen(p->buffer));
+
+}
+
 
 void pluviometro_configurar_fecha_hora(Pluviometro* p, int year, int month, int day, int hours, int minutes, int seconds) {
     struct tm tiempo_config = {0};
@@ -268,17 +224,17 @@ void pluviometro_mensaje_inicio(Pluviometro* p) {
     char buffer[500];
     char* fecha_hora = obtener_fecha_hora_actual();
     snprintf(buffer, sizeof(buffer), 
-    "# Pluviometro inicializado a las %s.\n"
-    "# Intervalo de reporte: %d segundos.\n"
-    "# Puerto serie:\n" 
-    "#    115200 baudios, 8 bits de datos,\n" 
-    "#    sin paridad, 1 bit de parada.\n"
-    "# Ubicacion: Este UTM %s, Norte UTM %s\n",
-    fecha_hora, 
-    p->intervalo,  
-    p->ubicacion_este, 
-    p->ubicacion_norte);
-    p->serial->write(buffer, strlen(buffer));
+        "# Pluviometro inicializado a las %s.\n"
+        "# Intervalo de reporte: %d segundos.\n"
+        "# Puerto serie:\n" 
+        "#    115200 baudios, 8 bits de datos,\n" 
+        "#    sin paridad, 1 bit de parada.\n"
+        "# Ubicacion: Este UTM %s, Norte UTM %s\n",
+        fecha_hora, 
+        p->intervalo,  
+        p->ubicacion_este, 
+        p->ubicacion_norte);
+        p->serial->write(buffer, strlen(buffer));
 }
 
 void imprimir_cabecera_datos(Pluviometro* p) {
@@ -288,17 +244,23 @@ void imprimir_cabecera_datos(Pluviometro* p) {
 
 void manejar_interrupcion(Pluviometro* p) {
     // Incrementar el contador de ticks
-    p->ticks++;
+    suma_ticks_ciclo(p);
     // Alternar el estado del LED
     p->led->write(!p->led->read());
-    
+
+    #ifdef DEBUG_PRINT_ESTADOS
+        char debug_buffer[50];
+        snprintf(debug_buffer, sizeof(debug_buffer), "Tick detectado. Total: %d\n", NUMERO_TICKS_CICLO(p));
+        debug_print(p, debug_buffer);
+    #endif
+
     // Cambiar el estado si está escuchando
     if (p->estado == ESCUCHANDO) {
         cambiar_estado(p, DETECTANDO_LLUVIA);
     }
     // Reiniciar el temporizador si ya estamos acumulando
     else if (p->estado == ACUMULANDO) {
-        p->timer->reset();
+        reiniciar_tiempo_ciclo(p);
     }
 }
 
@@ -345,7 +307,7 @@ const char* estado_a_cadena(Estado estado) {
 // para escribir mensales de depuracion 
 static void debug_print(Pluviometro* p, const char* mensaje) {
     #ifdef DEBUG_PRINT_ESTADOS
-    p->serial->write(mensaje, strlen(mensaje));
+        p->serial->write(mensaje, strlen(mensaje));
     #endif
 }
 

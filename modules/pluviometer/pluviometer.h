@@ -27,9 +27,7 @@
 #include "mbed.h"
 
 
-// Descomentar la siguiente línea para habilitar la impresión de estados
-// (solo en modo prueba)
-// #define DEBUG_PRINT_ESTADOS
+
 
 /**
  * @brief Estados del pluviómetro.
