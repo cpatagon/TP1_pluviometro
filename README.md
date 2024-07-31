@@ -1,88 +1,101 @@
-# Proyecto Pluviómetro
+# Proyecto Pluviómetro con MBED y STM32 NUCLEO F429ZI
 
-**autor: Luis Gómez**
-
-Este proyecto implementa un pluviómetro utilizando la plataforma MBED y sobre un integrado STM32 placa modelo NUCLEO F429ZI. El sistema mide la cantidad de lluvia mediante un sensor de tick y reporta la cantidad de lluvia acumulada a través de la comunicación serial.
-
+**Autor: Luis Gómez P.**
 
 ## Descripción
 
-El sistema se compone de sensores para detectar la lluvia, un análisis de datos para acumular y reportar la cantidad de lluvia, y actuadores para indicar cuando se ha detectado lluvia.
+Este proyecto implementa un sistema de pluviómetro utilizando la plataforma MBED sobre un microcontrolador STM32 en la placa NUCLEO F429ZI. El sistema mide la cantidad de lluvia mediante un sensor de ticks y reporta la acumulación a través de comunicación serial.
 
-![Figura 1: Esquema de un pluviómetro de balancín (fuente. Segerer et al., 2006)
-](doc/fig/pluviometro.png)
-
-**Figura 1:** *Esquema de un pluviómetro de balancín (fuente. Segerer et al., 2006)*
-
-## Estructura de componentes 
-
-![Figura 2: Esquema componentes pluviómetro
-](doc/fig/esquema_periferico_pluviometro.jpg)
-
-**Figura 2:** Esquema componentes pluviómetro
-
-
-## Componentes Utilizados 
+![Esquema de un pluviómetro de balancín](doc/fig/pluviometro.png)
+*Figura 1: Esquema de un pluviómetro de balancín (fuente: Segerer et al., 2006)*
 
 
 
 
-## Estructura del Código
+## Características
+
+- Detección precisa de precipitación mediante sensor de ticks.
+- Acumulación y reporte de lluvia en intervalos configurables.
+- Indicación visual de detección de lluvia mediante LED.
+- Comunicación serial para reportes y configuración.
+- Manejo de tiempo real para timestamping preciso de los eventos.
+- Configuración de ubicación geográfica (coordenadas UTM).
+
+## Componentes de Hardware
+
+![Esquema componentes pluviómetro](doc/fig/esquema_periferico_pluviometro.jpg)
+*Figura 2: Esquema de componentes del pluviómetro*
+
+- Placa STM32 NUCLEO F429ZI
+- Sensor de lluvia (simulado con un botón en esta implementación)
+- LED para indicación visual
+
+## Estructura del Software
+
+[![](https://mermaid.ink/img/pako:eNptkt1ugkAQhV9ls9f6Alw00dKmJqYxWq9KL6bLqhOBIcssjTU-VR-hL9ZhQfCnVzCH8x3mLBy1odTqSG8y-jI7cKze4qRQasVy_57oWYEGKdEfajx-UDL1ImT4DU4tMl8j5ZZd42rQxhTcj1RscPtsJVegdvJOmCCpg3ohBx104b1gZwVbV0NG13wvX8G9ehGw_kQDUqC4Dujlq4Be7bvGtkZjq5vKMVYlVchYU3XRuTMHeE5UCtVc1MJhYbCErPMGMay4s2Y_9cxhvaXglaRPiX9_-sUGiyAq0QtnK9kQUukeQmLL1vASsMloBwmZN1_lfLaDJRDrMgW2E2N87jPg9nAmhn1Xb9I-MDiscY-EpKUtyZ3f3Q637x4s_bn82-uV1F21xqxHOrcuB0zlJz02aKJ5Z3Ob6EhuU3D7RCfFSXzgmVaHwuiInbcj7chvdzraQFbJ5EOFGGHrID9bWvEpRSbXOU9_aeARjw?type=png)](https://mermaid-live-editor.fly.dev/edit#pako:eNptkt1ugkAQhV9ls9f6Alw00dKmJqYxWq9KL6bLqhOBIcssjTU-VR-hL9ZhQfCnVzCH8x3mLBy1odTqSG8y-jI7cKze4qRQasVy_57oWYEGKdEfajx-UDL1ImT4DU4tMl8j5ZZd42rQxhTcj1RscPtsJVegdvJOmCCpg3ohBx104b1gZwVbV0NG13wvX8G9ehGw_kQDUqC4Dujlq4Be7bvGtkZjq5vKMVYlVchYU3XRuTMHeE5UCtVc1MJhYbCErPMGMay4s2Y_9cxhvaXglaRPiX9_-sUGiyAq0QtnK9kQUukeQmLL1vASsMloBwmZN1_lfLaDJRDrMgW2E2N87jPg9nAmhn1Xb9I-MDiscY-EpKUtyZ3f3Q637x4s_bn82-uV1F21xqxHOrcuB0zlJz02aKJ5Z3Ob6EhuU3D7RCfFSXzgmVaHwuiInbcj7chvdzraQFbJ5EOFGGHrID9bWvEpRSbXOU9_aeARjw)
+*Figura 3: Diagrama de flujo del funcionamiento del pluviómetro*
+
+El software está organizado en varios módulos:
+
+- `pluviometer.h`: Declaraciones de la API pública del pluviómetro.
+- `pluviometer.c`: Implementación de las funciones del pluviómetro.
+- `main.cpp`: Programa principal que inicializa y ejecuta el sistema.
 
 
-![Figura 3: Diagrama Flujo código pluviómetro 
-](doc/fig/Diagrama_pluviometro.png)
 
-**Figura 3:** Diagrama de flujo funcionamiento pluviómetro
+### Funciones Principales
 
+- `pluviometro_init()`: Inicializa el pluviómetro.
+- `pluviometro_actualizar()`: Actualiza el estado del pluviómetro y maneja los eventos.
+- `pluviometro_reportar_lluvia()`: Genera un reporte de la lluvia acumulada.
+- `pluviometro_configurar_intervalo()`: Configura el intervalo de reporte.
+- `pluviometro_configurar_fecha_hora()`: Configura la fecha y hora del sistema.
+- `pluviometro_configurar_ubicacion()`: Configura las coordenadas UTM del pluviómetro.
 
-### Sensores
+### Maquina de estados Finitos (FSM)
 
-- **initializeSensors()**: Inicializa los sensores configurando el modo del botón de detección de lluvia y apagando los LEDs.
-- **isRaining()**: Verifica si está lloviendo comprobando el estado del botón de detección de lluvia.
-
-### Análisis de Datos
-
-- **analyzeRainfall()**: Analiza la lluvia detectada, imprime la hora actual y acumula la cantidad de lluvia detectada.
-- **accumulateRainfall()**: Incrementa el contador de lluvia.
-- **hasTimePassedMinutesRTC(int minutes)**: Verifica si ha pasado el tiempo especificado en minutos desde la última comprobación.
-
-### Actuación
-
-- **actOnRainfall()**: Enciende los LEDs de alarma y tick, y analiza la lluvia detectada.
-- **reportRainfall()**: Imprime la cantidad de lluvia acumulada y resetea el contador de lluvia.
-- **printRain(const char* buffer)**: Imprime un mensaje indicando que se ha detectado lluvia.
-- **DateTimeNow()**: Obtiene la fecha y hora actual en formato `"%Y-%m-%d %H:%M:%S"`.
-- **printAccumulatedRainfall()**: Imprime la cantidad de lluvia acumulada en el formato `"YYYY-MM-DD HH:MM - Accumulated rainfall: X.XX mm"`.
+[![](https://mermaid.ink/img/pako:eNqFkNFKwzAUQH8l3CeF7Qf6IJQmoFA36VqfAhKSuzXYJCVLENn2VX6CP2Y6O9eK4Ftyz7nhkANIpxAy2HbuTbbCB1JTbglhe9nGNLDK3XBgm6Ip7vMVXXO4HTDFgDKMlLKaFfVAX8qyeX7IR6nC3vmLVLGndVVPnshlNLEbaV40j035Q38VkOXy7shh5UjvUepeByH154flcJxqf2xNQufZZ3gNnOee4bVvXvv_5qQBFmDQG6FV-uPD4HIILRrkkKWjEv6VA7en5IkY3ObdSsiCj7gA7-KuhWwrun26xV6JgFSLnRfmonwPmdLB-dE8fQH3bJ1t?type=png)](https://mermaid-live-editor.fly.dev/edit#pako:eNqFkNFKwzAUQH8l3CeF7Qf6IJQmoFA36VqfAhKSuzXYJCVLENn2VX6CP2Y6O9eK4Ftyz7nhkANIpxAy2HbuTbbCB1JTbglhe9nGNLDK3XBgm6Ip7vMVXXO4HTDFgDKMlLKaFfVAX8qyeX7IR6nC3vmLVLGndVVPnshlNLEbaV40j035Q38VkOXy7shh5UjvUepeByH154flcJxqf2xNQufZZ3gNnOee4bVvXvv_5qQBFmDQG6FV-uPD4HIILRrkkKWjEv6VA7en5IkY3ObdSsiCj7gA7-KuhWwrun26xV6JgFSLnRfmonwPmdLB-dE8fQH3bJ1t)
+*Figura 4: Diagrama FSM del funcionamiento del pluviómetro*
 
 
- 
+
+
 
 ## Uso
 
-### Requisitos
+1. Clone el repositorio:
+git clone [URL_DEL_REPOSITORIO]
 
-- Placa compatible con MBED
-- Sensor de lluvia (tick)
-- LEDs para indicaciones
-- Comunicación serial configurada
+2. Abra el proyecto en su entorno de desarrollo MBED.
 
-### Configuración
+3. Compile y cargue el código en la placa NUCLEO F429ZI.
 
-1. Clonar el repositorio en tu entorno de desarrollo MBED.
-2. Compilar y cargar el código en tu placa MBED.
-3. Conectar los componentes de hardware (sensor de lluvia, LEDs, etc.) a la placa MBED según el esquema del proyecto.
+4. Conecte el sensor de lluvia (o simule con el botón de usuario) y observe los reportes a través de la comunicación serial.
 
-### Ejecución
+## Configuración
 
-1. Inicializar los sensores llamando a la función `initializeSensors()`.
-2. El programa principal ejecutará un bucle infinito que:
-    - Detectará si está lloviendo y actuará en consecuencia.
-    - Verificará a intervalos regulares la cantidad de lluvia acumulada y la reportará.
+Puede ajustar los siguientes parámetros en el código:
 
-### Ejemplo de Salida UART
+- `DEBOUNCE_TIME_MS`: Tiempo de debounce para el sensor en milisegundos.
+- `TICK_VALUE`: Valor de precipitación por cada tick del sensor.
+- `TIEMPO_REPORTE_PLUVIOMETRO`: Intervalo de reporte en segundos.
 
-```plaintext
-2024-07-01 12:00:00 - Rain detected
-2024-07-01 12:01 - Accumulated rainfall: 0.20 mm
+## Ejemplo de Salida
+'''
+    Pluviometro inicializado.
+    Intervalo de reporte: 60 segundos.
+    Configuracion de puerto serie: 115200 baudios, 8 bits de datos, sin paridad, 1 bit de parada.
+    Ubicacion: Este UTM 691249.92, Norte UTM 5711836.83
+    Estado inicial: ESCUCHANDO
+    2024-07-21 12:01:00 - Lluvia acumulada: 0.4 mm
+    2024-07-21 12:02:00 - Lluvia acumulada: 0.6 mm
+'''
 
+
+## Licencia
+
+Este proyecto está bajo la Licencia GNU General Public License v3.0. Vea el archivo `LICENSE` para más detalles.
+
+## Contribuciones
+
+Las contribuciones son bienvenidas. Por favor, abra un issue para discutir los cambios propuestos antes de hacer un pull request.
