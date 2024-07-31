@@ -27,6 +27,12 @@
 #include <string.h>
 #include <cstdio>
 #include <cstring>
+#include <stdarg.h>
+
+
+// Descomentar la siguiente línea para habilitar la impresión de estados
+// (solo en modo prueba)
+// #define DEBUG_PRINT_ESTADOS
 
 #define DEBOUNCE_TIME_MS 100
 #define TICK_VALUE 2 // 2 décimas de mm por tick
@@ -35,9 +41,7 @@
 #define REINICIAR_TICKS_CICLO(p) ((p)->ticks = 0)
 #define NUMERO_TICKS_CICLO(p) ((p)->ticks)
 
-// Descomentar la siguiente línea para habilitar la impresión de estados
-// (solo en modo prueba)
-#define DEBUG_PRINT_ESTADOS
+
 
 #ifdef DEBUG_PRINT_ESTADOS
     static void debug_print(Pluviometro* p, const char* mensaje);
@@ -56,10 +60,9 @@ static void boton_isr(void* context);
 static void enviar_uart(Pluviometro* p);
 static void reiniciar_tiempo_ciclo(Pluviometro* p);
 
-// Calcula la lluvia acumulada
+void pluviometro_imprimir(Pluviometro* p, const char* format, ...);
 static int32_t calcular_lluvia_acumulada(Pluviometro* p);
 
-// Genera el string del reporte
 static void reportar_lluvia(Pluviometro* p);
 
 
@@ -67,12 +70,26 @@ static int32_t calcular_lluvia_acumulada(Pluviometro* p) {
     return NUMERO_TICKS_CICLO(p) * TICK_VALUE;   // Asumiendo que TICK_VALUE es esta en decima de mm
 }
 
+void pluviometro_imprimir(Pluviometro* p, const char* format, ...) {
+    char buffer[512];  // Aumentamos el tamaño para manejar mensajes más largos
+    va_list args;
+    va_start(args, format);
+    int length = vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    if (length > 0 && length < sizeof(buffer)) {
+        p->serial->write(buffer, length);
+    } else {
+        const char* error_msg = "Error: mensaje demasiado largo o formato inválido\n";
+        p->serial->write(error_msg, strlen(error_msg));
+    }
+}
 
 void callback_reporte(void* context) {
     Pluviometro* p = (Pluviometro*)context;
     p->flag_reporte = true;
     #ifdef DEBUG_PRINT_ESTADOS
-        debug_print(p, "Flag de reporte activado\n");
+        debug_print(p, "Flag de reporte activado");
     #endif
 }
 
@@ -86,9 +103,9 @@ void boton_isr(void* context) {
 
 void pluviometro_configurar_ubicacion(Pluviometro* p, const char* este, const char* norte) {
     strncpy(p->ubicacion_este, este, sizeof(p->ubicacion_este) - 1);
-    p->ubicacion_este[sizeof(p->ubicacion_este) - 1] = '\0';  // Asegura terminación nula
+    p->ubicacion_este[sizeof(p->ubicacion_este) - 1] = '\0';  
     strncpy(p->ubicacion_norte, norte, sizeof(p->ubicacion_norte) - 1);
-    p->ubicacion_norte[sizeof(p->ubicacion_norte) - 1] = '\0';  // Asegura terminación nula
+    p->ubicacion_norte[sizeof(p->ubicacion_norte) - 1] = '\0';  
 }
 
 void pluviometro_init(Pluviometro* p, PinName pin_boton, PinName pin_led, PinName tx, PinName rx, int intervalo_reporte) {
@@ -110,10 +127,9 @@ void pluviometro_init(Pluviometro* p, PinName pin_boton, PinName pin_led, PinNam
 
     p->intervalo = intervalo_reporte; 
     p->ticker_reporte.attach(callback(&callback_reporte, p), std::chrono::seconds(intervalo_reporte));
+    p->estado = INICIALIZANDO;
+    p->cabecera_impresa = false;
 
-
-    pluviometro_mensaje_inicio(p);
-    imprimir_cabecera_datos(p);
 }
 void pluviometro_actualizar(Pluviometro* p) {
       // Manejar la bandera de precipitación primero
@@ -131,6 +147,14 @@ void pluviometro_actualizar(Pluviometro* p) {
 
     // Máquina de estados
     switch (p->estado) {
+        case INICIALIZANDO:
+            if (!p->cabecera_impresa) {
+                pluviometro_mensaje_inicio(p);
+                imprimir_cabecera_datos(p);
+                p->cabecera_impresa = true;
+            }
+            cambiar_estado(p, ESCUCHANDO);
+            break;
         case ESCUCHANDO:
             if (p->bandera_precipitacion) {
                 cambiar_estado(p, DETECTANDO_LLUVIA);
@@ -147,7 +171,7 @@ void pluviometro_actualizar(Pluviometro* p) {
 
         case REPORTANDO:
             #ifdef DEBUG_PRINT_ESTADOS
-                debug_print(p, "Entrando en estado REPORTANDO\n");
+                debug_print(p, "Entrando en estado REPORTANDO");
             #endif
             finalizar_acumulacion(p);
             reportar_lluvia(p);
@@ -169,8 +193,6 @@ void reiniciar_tiempo_ciclo(Pluviometro* p){
 void suma_ticks_ciclo(Pluviometro* p){
     p->ticks++;
 }
-
-
 
 char* obtener_fecha_hora_actual() {
     static char buffer[20];  // Tamaño suficiente para "YYYY-MM-DD HH:MM:SS\0"
@@ -196,12 +218,11 @@ static void reportar_lluvia(Pluviometro* p) {
     
     #ifdef DEBUG_PRINT_ESTADOS
         debug_print(p, "Prueba reporte_lluvia: ");
-        debug_print(p, p->buffer);
     #endif
 }
 
 static void enviar_uart(Pluviometro* p) {
-    p->serial->write(p->buffer, strlen(p->buffer));
+    pluviometro_imprimir(p, "%s", p->buffer);
 
 }
 
@@ -214,32 +235,27 @@ void pluviometro_configurar_fecha_hora(Pluviometro* p, int year, int month, int 
     tiempo_config.tm_hour = hours;
     tiempo_config.tm_min = minutes;
     tiempo_config.tm_sec = seconds;
-    
     p->tiempo_actual = mktime(&tiempo_config);
     set_time(p->tiempo_actual);
 }
 
 // Actualizar el mensaje de inicio si es necesario
 void pluviometro_mensaje_inicio(Pluviometro* p) {
-    char buffer[500];
-    char* fecha_hora = obtener_fecha_hora_actual();
-    snprintf(buffer, sizeof(buffer), 
-        "# Pluviometro inicializado a las %s.\n"
-        "# Intervalo de reporte: %d segundos.\n"
-        "# Puerto serie:\n" 
-        "#    115200 baudios, 8 bits de datos,\n" 
-        "#    sin paridad, 1 bit de parada.\n"
-        "# Ubicacion: Este UTM %s, Norte UTM %s\n",
-        fecha_hora, 
-        p->intervalo,  
-        p->ubicacion_este, 
-        p->ubicacion_norte);
-        p->serial->write(buffer, strlen(buffer));
 }
 
 void imprimir_cabecera_datos(Pluviometro* p) {
-    const char* cabecera = "# Fecha [YYYY-MM-DD] Hora [HH:MM:SS], Precipitacion Acumulada [mm]\n";
-    p->serial->write(cabecera, strlen(cabecera));
+    #ifdef DEBUG_PRINT_ESTADOS
+        debug_print(p, "¡¡¡ IMPORTANTE !!!: PLUVIOMETRO EN MODO DE PRUEBA\n");
+    #endif
+    char buffer[512];
+    int length = snprintf(buffer, sizeof(buffer),
+        "# Pluviometro inicializado a las %s.\n"
+        "# Intervalo de reporte: %d segundos.\n"
+        "# Puerto serie: 115200 baudios, 8 bits de datos, sin paridad, 1 bit de parada.\n"
+        "# Ubicacion: Este UTM %s, Norte UTM %s\n"
+        "# Fecha [YYYY-MM-DD] Hora [HH:MM:SS], Precipitacion Acumulada [mm]\n",
+        obtener_fecha_hora_actual(), p->intervalo, p->ubicacion_este, p->ubicacion_norte);
+    pluviometro_imprimir(p, "%s", buffer);
 }
 
 void manejar_interrupcion(Pluviometro* p) {
@@ -250,7 +266,7 @@ void manejar_interrupcion(Pluviometro* p) {
 
     #ifdef DEBUG_PRINT_ESTADOS
         char debug_buffer[50];
-        snprintf(debug_buffer, sizeof(debug_buffer), "Tick detectado. Total: %d\n", NUMERO_TICKS_CICLO(p));
+        snprintf(debug_buffer, sizeof(debug_buffer), "Tick detectado. Total: %d", NUMERO_TICKS_CICLO(p));
         debug_print(p, debug_buffer);
     #endif
 
@@ -274,7 +290,7 @@ void cambiar_estado(Pluviometro* p, Estado nuevo_estado) {
         const char* estado_str = estado_a_cadena(nuevo_estado);
         char buffer[100];
         snprintf(buffer, sizeof(buffer), "Estado actual: %s\n", estado_str);
-        p->serial->write(buffer, strlen(buffer));
+        pluviometro_imprimir(p, "%s", buffer);
     #endif
 }
 
@@ -292,6 +308,8 @@ void finalizar_acumulacion(Pluviometro* p) {
 
 const char* estado_a_cadena(Estado estado) {
     switch (estado) {
+        case INICIALIZANDO:
+            return "INICIALIZANDO";
         case ESCUCHANDO:
             return "ESCUCHANDO";
         case DETECTANDO_LLUVIA:
@@ -307,7 +325,7 @@ const char* estado_a_cadena(Estado estado) {
 // para escribir mensales de depuracion 
 static void debug_print(Pluviometro* p, const char* mensaje) {
     #ifdef DEBUG_PRINT_ESTADOS
-        p->serial->write(mensaje, strlen(mensaje));
+        pluviometro_imprimir(p, "%s\n", mensaje);
     #endif
 }
 
@@ -317,3 +335,4 @@ void pluviometro_configurar_intervalo(Pluviometro* p, int nuevo_intervalo) {
     p->ticker_reporte.attach(callback(&callback_reporte, p), std::chrono::seconds(nuevo_intervalo));
     p->intervalo = nuevo_intervalo;  // Añade esta línea para actualizar el intervalo en la estructura
 }
+

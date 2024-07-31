@@ -31,11 +31,11 @@
 
 int main() {
     Pluviometro pluviometro;
-
+    pluviometro_init(&pluviometro, USER_BUTTON, LED1, USBTX, USBRX, TIEMPO_REPORTE_PLUVIOMETRO);
     pluviometro_configurar_fecha_hora(&pluviometro, 2024, 7, 21, 12, 0, 0);
     pluviometro_configurar_intervalo(&pluviometro, TIEMPO_REPORTE_PLUVIOMETRO );
     pluviometro_configurar_ubicacion(&pluviometro,  UBICACION_ESTE_UTM, UBICACION_NORTE_UTM ); 
-    pluviometro_init(&pluviometro, USER_BUTTON, LED1, USBTX, USBRX, TIEMPO_REPORTE_PLUVIOMETRO);
+ 
     
     while (1) {
         pluviometro_actualizar(&pluviometro);

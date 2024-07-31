@@ -36,6 +36,7 @@
  * durante su operación.
  */
 typedef enum {
+    INICIALIZANDO,
     ESCUCHANDO,        /**< El pluviómetro está en espera de precipitación */
     DETECTANDO_LLUVIA, /**< Se ha detectado precipitación y se está iniciando la medición */
     ACUMULANDO,        /**< El pluviómetro está acumulando datos de precipitación */
@@ -65,6 +66,7 @@ typedef struct {
     Ticker ticker_reporte;    /**< Ticker para generar interrupciones periódicas */
     char ubicacion_este[20];  /**< Coordenada Este UTM de la ubicación */
     char ubicacion_norte[20]; /**< Coordenada Norte UTM de la ubicación */
+    bool cabecera_impresa;
 } Pluviometro;
 
 #ifdef __cplusplus
