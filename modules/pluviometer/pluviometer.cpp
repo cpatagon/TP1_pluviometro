@@ -336,6 +336,6 @@ static void debug_print(Pluviometro* p, const char* mensaje) {
 void pluviometro_configurar_intervalo(Pluviometro* p, int nuevo_intervalo) {
     p->ticker_reporte.detach();
     p->ticker_reporte.attach(callback(&callback_reporte, p), std::chrono::seconds(nuevo_intervalo));
-    p->intervalo = nuevo_intervalo;  // Añade esta línea para actualizar el intervalo en la estructura
+    p->intervalo = nuevo_intervalo;  // actualizar el intervalo en la estructura
 }
 
