@@ -47,7 +47,7 @@
     static void debug_print(Pluviometro* p, const char* mensaje);
 #endif
 
-static void pluviometro_mensaje_inicio(Pluviometro* p);
+
 static const char* estado_a_cadena(Estado estado);
 static void cambiar_estado(Pluviometro* p, Estado nuevo_estado);
 static void manejar_interrupcion(Pluviometro* p);
@@ -59,6 +59,7 @@ static void callback_reporte(void* context);
 static void boton_isr(void* context);
 static void enviar_uart(Pluviometro* p);
 static void reiniciar_tiempo_ciclo(Pluviometro* p);
+static char* cabecera_datos(Pluviometro* p);
 
 void pluviometro_imprimir(Pluviometro* p, const char* format, ...);
 static int32_t calcular_lluvia_acumulada(Pluviometro* p);
@@ -149,7 +150,6 @@ void pluviometro_actualizar(Pluviometro* p) {
     switch (p->estado) {
         case INICIALIZANDO:
             if (!p->cabecera_impresa) {
-                pluviometro_mensaje_inicio(p);
                 imprimir_cabecera_datos(p);
                 p->cabecera_impresa = true;
             }
@@ -182,9 +182,6 @@ void pluviometro_actualizar(Pluviometro* p) {
             break;
     }
 }
-
-
-
 
 void reiniciar_tiempo_ciclo(Pluviometro* p){
     p->timer->reset();
@@ -239,23 +236,29 @@ void pluviometro_configurar_fecha_hora(Pluviometro* p, int year, int month, int 
     set_time(p->tiempo_actual);
 }
 
-// Actualizar el mensaje de inicio si es necesario
-void pluviometro_mensaje_inicio(Pluviometro* p) {
+
+
+char* cabecera_datos(Pluviometro* p){
+    char buffer[400];
+    int length = snprintf(buffer, sizeof(buffer),
+                            "# Pluviometro inicializado a las %s.\n"
+                            "# Intervalo de reporte: %d segundos.\n"
+                            "# Puerto serie: 115200 baudios, 8 bits de datos, sin paridad, 1 bit de parada.\n"
+                            "# Ubicacion: Este UTM %s, Norte UTM %s\n"
+                            "# Fecha [YYYY-MM-DD] Hora [HH:MM:SS], Precipitacion Acumulada [mm]\n",
+                            obtener_fecha_hora_actual(), 
+                            p->intervalo, 
+                            p->ubicacion_este, 
+                            p->ubicacion_norte
+                       );
+return buffer;
 }
 
 void imprimir_cabecera_datos(Pluviometro* p) {
     #ifdef DEBUG_PRINT_ESTADOS
         debug_print(p, "¡¡¡ IMPORTANTE !!!: PLUVIOMETRO EN MODO DE PRUEBA\n");
     #endif
-    char buffer[512];
-    int length = snprintf(buffer, sizeof(buffer),
-        "# Pluviometro inicializado a las %s.\n"
-        "# Intervalo de reporte: %d segundos.\n"
-        "# Puerto serie: 115200 baudios, 8 bits de datos, sin paridad, 1 bit de parada.\n"
-        "# Ubicacion: Este UTM %s, Norte UTM %s\n"
-        "# Fecha [YYYY-MM-DD] Hora [HH:MM:SS], Precipitacion Acumulada [mm]\n",
-        obtener_fecha_hora_actual(), p->intervalo, p->ubicacion_este, p->ubicacion_norte);
-    pluviometro_imprimir(p, "%s", buffer);
+    pluviometro_imprimir(p, "%s", cabecera_datos(p));
 }
 
 void manejar_interrupcion(Pluviometro* p) {
