@@ -23,6 +23,7 @@
  */
 #include "mbed.h"
 #include "pluviometer.h"
+#include "uart_handler.h"
 #include <cstdint>
 #include <string.h>
 #include <cstdio>
@@ -72,18 +73,10 @@ static int32_t calcular_lluvia_acumulada(Pluviometro* p) {
 }
 
 void pluviometro_imprimir(Pluviometro* p, const char* format, ...) {
-    char buffer[512];  // Aumentamos el tamaño para manejar mensajes más largos
     va_list args;
     va_start(args, format);
-    int length = vsnprintf(buffer, sizeof(buffer), format, args);
+    uart_printf(&p->uart, format, args);
     va_end(args);
-
-    if (length > 0 && length < sizeof(buffer)) {
-        p->serial->write(buffer, length);
-    } else {
-        const char* error_msg = "Error: mensaje demasiado largo o formato inválido\n";
-        p->serial->write(error_msg, strlen(error_msg));
-    }
 }
 
 void callback_reporte(void* context) {
@@ -112,7 +105,7 @@ void pluviometro_configurar_ubicacion(Pluviometro* p, const char* este, const ch
 void pluviometro_init(Pluviometro* p, PinName pin_boton, PinName pin_led, PinName tx, PinName rx, int intervalo_reporte) {
     p->boton = new InterruptIn(pin_boton);
     p->led = new DigitalOut(pin_led);
-    p->serial = new BufferedSerial(tx, rx, 115200);
+   
     p->timer = new Timer();
     p->debounce_timer = new Timer();
 
@@ -123,13 +116,15 @@ void pluviometro_init(Pluviometro* p, PinName pin_boton, PinName pin_led, PinNam
     p->debounce_timer->start();
 
     p->boton->fall(callback(boton_isr, p));
-    p->serial->set_format(8, BufferedSerial::None, 1);
+
     p->timer->start();
 
     p->intervalo = intervalo_reporte; 
     p->ticker_reporte.attach(callback(&callback_reporte, p), std::chrono::seconds(intervalo_reporte));
     p->estado = INICIALIZANDO;
     p->cabecera_impresa = false;
+
+     uart_init(&p->uart, tx, rx, 115200);
 
 }
 void pluviometro_actualizar(Pluviometro* p) {
@@ -284,18 +279,6 @@ void manejar_interrupcion(Pluviometro* p) {
 }
 
 
-void cambiar_estado(Pluviometro* p, Estado nuevo_estado) {
-    p->estado = nuevo_estado;
-    // Imprimir el nuevo estado por UART
-    #ifdef DEBUG_PRINT_ESTADOS
-        // Imprimir el nuevo estado por UART solo si DEBUG_PRINT_ESTADOS está definido
-
-        const char* estado_str = estado_a_cadena(nuevo_estado);
-        char buffer[100];
-        snprintf(buffer, sizeof(buffer), "Estado actual: %s\n", estado_str);
-        pluviometro_imprimir(p, "%s", buffer);
-    #endif
-}
 
 
 void iniciar_acumulacion(Pluviometro* p) {
@@ -325,10 +308,24 @@ const char* estado_a_cadena(Estado estado) {
             return "DESCONOCIDO";
     }
 }
+
+void cambiar_estado(Pluviometro* p, Estado nuevo_estado) {
+    p->estado = nuevo_estado;
+    // Imprimir el nuevo estado por UART
+    #ifdef DEBUG_PRINT_ESTADOS
+        // Imprimir el nuevo estado por UART solo si DEBUG_PRINT_ESTADOS está definido
+
+        const char* estado_str = estado_a_cadena(nuevo_estado);
+        char buffer[100];
+        snprintf(buffer, sizeof(buffer), "Estado actual: %s\n", estado_str);
+        pluviometro_imprimir(p, "%s", buffer);
+    #endif
+}
+
 // para escribir mensales de depuracion 
 static void debug_print(Pluviometro* p, const char* mensaje) {
     #ifdef DEBUG_PRINT_ESTADOS
-        pluviometro_imprimir(p, "%s\n", mensaje);
+        uart_printf(&p->uart, "%s\n", mensaje);
     #endif
 }
 

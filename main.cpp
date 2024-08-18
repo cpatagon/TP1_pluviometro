@@ -24,12 +24,24 @@
  
 #include "mbed.h"
 #include "pluviometer.h"
+#include "uart_handler.h"
+
+
 
 #define TIEMPO_REPORTE_PLUVIOMETRO 60 // en segundos
 #define UBICACION_ESTE_UTM "691249.92"
 #define UBICACION_NORTE_UTM "5711836.83"
 
 int main() {
+    // Inicializar el manejador UART
+    UARTHandler uart_handler;
+    uart_init(&uart_handler, USBTX, USBRX, 115200);
+    int counter = 0;
+    uart_printf(&uart_handler, "12Test UART #%d\r\n", counter);
+    ThisThread::sleep_for(1s);
+
+
+
     Pluviometro pluviometro;
     pluviometro_init(&pluviometro, USER_BUTTON, LED1, USBTX, USBRX, TIEMPO_REPORTE_PLUVIOMETRO);
     pluviometro_configurar_fecha_hora(&pluviometro, 2024, 7, 21, 12, 0, 0);

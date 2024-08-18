@@ -25,6 +25,7 @@
 #define PLUVIOMETER_H
 
 #include "mbed.h"
+#include "uart_handler.h" 
 
 
 
@@ -52,7 +53,7 @@ typedef enum {
 typedef struct {
     InterruptIn* boton;       /**< Botón para detectar precipitaciones */
     DigitalOut* led;          /**< LED indicador */
-    BufferedSerial* serial;   /**< Interfaz serial para comunicación */
+    UARTHandler uart;  
     Timer* timer;             /**< Temporizador principal */
     Timer* debounce_timer;    /**< Temporizador para el antirrebote del botón */
     Estado estado;            /**< Estado actual del pluviómetro */
