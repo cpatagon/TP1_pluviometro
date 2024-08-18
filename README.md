@@ -1,101 +1,202 @@
-# Proyecto Pluviómetro con MBED y STM32 NUCLEO F429ZI
+# Estación Meteorológica, Selección del proyecto a implementar
 
-**Autor: Luis Gómez P.**
+*autor:* Luis Gómez
 
-## Descripción
+La selección del proyecto a implementar es un paso crucial en el desarrollo de cualquier sistema embebido [@marwedel2021embedded]. Este proceso inicial determina no solo el alcance y los objetivos del proyecto, sino también los recursos necesarios y los desafíos técnicos que se enfrentarán a lo largo del desarrollo. Para asegurar una decisión informada y realista, se han analizado tres proyectos reales de estaciones meteorológicas, cada uno con diferentes características y aplicaciones.
 
-Este proyecto implementa un sistema de pluviómetro utilizando la plataforma MBED sobre un microcontrolador STM32 en la placa NUCLEO F429ZI. El sistema mide la cantidad de lluvia mediante un sensor de ticks y reporta la acumulación a través de comunicación serial.
+## Proyectos Analizados
 
-![Esquema de un pluviómetro de balancín](doc/fig/pluviometro.png)
-*Figura 1: Esquema de un pluviómetro de balancín (fuente: Segerer et al., 2006)*
+Los tres proyectos considerados son:
 
+- **Proyecto 1: WeatherFlow Tempest**.  
+  Este es un sistema de estación meteorológica personal avanzado que incluye sensores para medir temperatura, humedad, presión barométrica, velocidad y dirección del viento, lluvia, y radiación UV e iluminación solar. Utiliza un diseño sin partes móviles y se conecta a través de Wi-Fi.  
+  [enlace](https://weatherflow.com/tempest-weather-system/)
 
+- **Proyecto 2: Davis Instruments Vantage Pro2**.  
+  Esta es una estación meteorológica profesional que ofrece mediciones precisas de temperatura, humedad, presión barométrica, velocidad y dirección del viento, y precipitación. Incluye un pluviómetro de cubeta basculante y tiene opciones de conectividad tanto cableada como inalámbrica.  
+  [enlace](https://www.davisinstruments.com/pages/vantage-pro2)
 
+- **Proyecto 3: Raspberry Pi Weather Station**.  
+  Este es un proyecto de código abierto que utiliza una Raspberry Pi como unidad de procesamiento central, conectada a varios sensores para medir temperatura, humedad, presión barométrica y, opcionalmente, precipitación. Es altamente personalizable y puede ser expandido según las necesidades del usuario.  
+  [enlace](https://projects.raspberrypi.org/en/projects/build-your-own-weather-station)
 
-## Características
+## Aspectos Analizados
 
-- Detección precisa de precipitación mediante sensor de ticks.
-- Acumulación y reporte de lluvia en intervalos configurables.
-- Indicación visual de detección de lluvia mediante LED.
-- Comunicación serial para reportes y configuración.
-- Manejo de tiempo real para timestamping preciso de los eventos.
-- Configuración de ubicación geográfica (coordenadas UTM).
+Para la evaluación de los proyectos se consideraron los siguientes aspectos clave:
 
-## Componentes de Hardware
+- **Precisión de las mediciones** (Ponderación: 9): La exactitud y confiabilidad de los datos recolectados por los sensores.
+- **Facilidad de implementación** (Ponderación: 8): La complejidad del proceso de instalación y puesta en marcha del sistema.
+- **Costo** (Ponderación: 7): El precio total del sistema, incluyendo todos los componentes necesarios.
+- **Conectividad** (Ponderación: 8): Las opciones de comunicación y transmisión de datos que ofrece el sistema.
+- **Escalabilidad** (Ponderación: 7): La capacidad del sistema para ser expandido o modificado para incluir nuevas funcionalidades.
+- **Robustez** (Ponderación: 8): La durabilidad del sistema y su capacidad para funcionar en diversas condiciones ambientales.
 
-![Esquema componentes pluviómetro](doc/fig/esquema_periferico_pluviometro.jpg)
-*Figura 2: Esquema de componentes del pluviómetro*
+## Resultados del Análisis
 
-- Placa STM32 NUCLEO F429ZI
-- Sensor de lluvia (simulado con un botón en esta implementación)
-- LED para indicación visual
+Los proyectos fueron evaluados utilizando una escala de 1 a 10 en cada uno de los aspectos, siendo 1 y 10 lo menos y más conveniente, respectivamente. Los resultados se resumen en la siguiente tabla:
 
-## Estructura del Software
+| **Aspecto Evaluado**            | **Ponderación** | **WeatherFlow Tempest** | **Davis Vantage Pro2** | **Raspberry Pi WS** |
+|---------------------------------|----------------|-------------------------|------------------------|---------------------|
+| Precisión de las mediciones     | 9              | 8 (72)                  | 9 (81)                 | 7 (63)              |
+| Facilidad de implementación     | 8              | 9 (72)                  | 7 (56)                 | 6 (48)              |
+| Costo                           | 7              | 5 (35)                  | 3 (21)                 | 10 (70)             |
+| Conectividad                    | 8              | 9 (72)                  | 8 (64)                 | 8 (64)              |
+| Escalabilidad                   | 7              | 6 (42)                  | 7 (49)                 | 10 (70)             |
+| Robustez                        | 8              | 8 (64)                  | 9 (72)                 | 6 (48)              |
+| **Total**                       |                | **357**                 | **343**                | **363**             |
 
-[![](https://mermaid.ink/img/pako:eNptkt1ugkAQhV9ls9f6Alw00dKmJqYxWq9KL6bLqhOBIcssjTU-VR-hL9ZhQfCnVzCH8x3mLBy1odTqSG8y-jI7cKze4qRQasVy_57oWYEGKdEfajx-UDL1ImT4DU4tMl8j5ZZd42rQxhTcj1RscPtsJVegdvJOmCCpg3ohBx104b1gZwVbV0NG13wvX8G9ehGw_kQDUqC4Dujlq4Be7bvGtkZjq5vKMVYlVchYU3XRuTMHeE5UCtVc1MJhYbCErPMGMay4s2Y_9cxhvaXglaRPiX9_-sUGiyAq0QtnK9kQUukeQmLL1vASsMloBwmZN1_lfLaDJRDrMgW2E2N87jPg9nAmhn1Xb9I-MDiscY-EpKUtyZ3f3Q637x4s_bn82-uV1F21xqxHOrcuB0zlJz02aKJ5Z3Ob6EhuU3D7RCfFSXzgmVaHwuiInbcj7chvdzraQFbJ5EOFGGHrID9bWvEpRSbXOU9_aeARjw?type=png)](https://mermaid-live-editor.fly.dev/edit#pako:eNptkt1ugkAQhV9ls9f6Alw00dKmJqYxWq9KL6bLqhOBIcssjTU-VR-hL9ZhQfCnVzCH8x3mLBy1odTqSG8y-jI7cKze4qRQasVy_57oWYEGKdEfajx-UDL1ImT4DU4tMl8j5ZZd42rQxhTcj1RscPtsJVegdvJOmCCpg3ohBx104b1gZwVbV0NG13wvX8G9ehGw_kQDUqC4Dujlq4Be7bvGtkZjq5vKMVYlVchYU3XRuTMHeE5UCtVc1MJhYbCErPMGMay4s2Y_9cxhvaXglaRPiX9_-sUGiyAq0QtnK9kQUukeQmLL1vASsMloBwmZN1_lfLaDJRDrMgW2E2N87jPg9nAmhn1Xb9I-MDiscY-EpKUtyZ3f3Q637x4s_bn82-uV1F21xqxHOrcuB0zlJz02aKJ5Z3Ob6EhuU3D7RCfFSXzgmVaHwuiInbcj7chvdzraQFbJ5EOFGGHrID9bWvEpRSbXOU9_aeARjw)
-*Figura 3: Diagrama de flujo del funcionamiento del pluviómetro*
+## Justificación de la Selección
 
-El software está organizado en varios módulos:
+Tras un análisis, se ha decidido basar nuestro proyecto en el diseño de la Raspberry Pi Weather Station. Sin embargo, esto no implica que no se puedan utilizar soluciones implementadas en las otras estaciones. Adicionalmente, cabe mencionar que el procesador empleado será un STM32F429ZI. Las razones para esta elección son:
 
-- `pluviometer.h`: Declaraciones de la API pública del pluviómetro.
-- `pluviometer.c`: Implementación de las funciones del pluviómetro.
-- `main.cpp`: Programa principal que inicializa y ejecuta el sistema.
+1. **Máxima flexibilidad y escalabilidad:**  
+   La naturaleza de código abierto y la capacidad de programación de la Raspberry Pi ofrecen una plataforma ideal para el desarrollo y la experimentación, permitiendo una fácil expansión y modificación del sistema según nuestras necesidades específicas.
 
+2. **Costo-efectividad:**  
+   Aunque los otros sistemas ofrecen mayor precisión y robustez, el proyecto Raspberry Pi proporciona una excelente relación costo-beneficio, lo que es crucial para un proyecto académico o de investigación con presupuesto limitado.
 
+3. **Oportunidades de aprendizaje:**  
+   Este proyecto ofrece la mejor oportunidad para comprender a fondo los principios de los sistemas embebidos, desde la programación de bajo nivel hasta la integración de sensores y la gestión de datos.
 
-### Funciones Principales
+4. **Personalización:**  
+   Podemos incorporar características de los otros sistemas, como por ejemplo, el diseño sin partes móviles del WeatherFlow Tempest o la precisión de medición del Davis Vantage Pro2, adaptándolas a nuestra implementación.
 
-- `pluviometro_init()`: Inicializa el pluviómetro.
-- `pluviometro_actualizar()`: Actualiza el estado del pluviómetro y maneja los eventos.
-- `pluviometro_reportar_lluvia()`: Genera un reporte de la lluvia acumulada.
-- `pluviometro_configurar_intervalo()`: Configura el intervalo de reporte.
-- `pluviometro_configurar_fecha_hora()`: Configura la fecha y hora del sistema.
-- `pluviometro_configurar_ubicacion()`: Configura las coordenadas UTM del pluviómetro.
+5. **Comunidad y soporte:**  
+   Existe una amplia comunidad de desarrolladores y recursos disponibles para proyectos basados en Raspberry Pi, lo que facilitará la resolución de problemas y la mejora continua del sistema.
 
-### Maquina de estados Finitos (FSM)
+## Diagrama en Bloques del Sistema Propuesto
 
-[![](https://mermaid.ink/img/pako:eNqFkNFKwzAUQH8l3CeF7Qf6IJQmoFA36VqfAhKSuzXYJCVLENn2VX6CP2Y6O9eK4Ftyz7nhkANIpxAy2HbuTbbCB1JTbglhe9nGNLDK3XBgm6Ip7vMVXXO4HTDFgDKMlLKaFfVAX8qyeX7IR6nC3vmLVLGndVVPnshlNLEbaV40j035Q38VkOXy7shh5UjvUepeByH154flcJxqf2xNQufZZ3gNnOee4bVvXvv_5qQBFmDQG6FV-uPD4HIILRrkkKWjEv6VA7en5IkY3ObdSsiCj7gA7-KuhWwrun26xV6JgFSLnRfmonwPmdLB-dE8fQH3bJ1t?type=png)](https://mermaid-live-editor.fly.dev/edit#pako:eNqFkNFKwzAUQH8l3CeF7Qf6IJQmoFA36VqfAhKSuzXYJCVLENn2VX6CP2Y6O9eK4Ftyz7nhkANIpxAy2HbuTbbCB1JTbglhe9nGNLDK3XBgm6Ip7vMVXXO4HTDFgDKMlLKaFfVAX8qyeX7IR6nC3vmLVLGndVVPnshlNLEbaV40j035Q38VkOXy7shh5UjvUepeByH154flcJxqf2xNQufZZ3gNnOee4bVvXvv_5qQBFmDQG6FV-uPD4HIILRrkkKWjEv6VA7en5IkY3ObdSsiCj7gA7-KuhWwrun26xV6JgFSLnRfmonwPmdLB-dE8fQH3bJ1t)
-*Figura 4: Diagrama FSM del funcionamiento del pluviómetro*
+En la siguiente figura se presenta el diagrama en bloques del sistema propuesto, basado en la Raspberry Pi Weather Station pero incorporando mejoras inspiradas en los otros sistemas analizados.
 
+![Diagrama de bloques de la estación meteorológica basada en la STM32F429ZI](doc/fig/diagramaEstacionMet.png)
 
+Este proyecto se destaca especialmente por combinar la flexibilidad y accesibilidad de una plataforma de código abierto con la precisión y funcionalidad de sistemas comerciales. A diferencia de soluciones preempaquetadas, nuestro sistema permitirá una personalización completa de los parámetros medidos, los intervalos de muestreo, y los métodos de procesamiento y transmisión de datos. Además, la capacidad de integrar fácilmente nuevos sensores o módulos de comunicación hace que este sistema sea particularmente adecuado para aplicaciones de investigación o educativas que requieren adaptabilidad y expansión continua.
 
+# Elicitación de Requisitos y Casos de Uso
 
+## Análisis de Productos Disponibles en el Mercado
 
-## Uso
+El primer paso en la elicitación de requisitos es realizar un análisis exhaustivo de los productos existentes en el mercado que ofrecen funcionalidades similares a las que se pretende desarrollar. Este análisis no solo permite identificar las características más valoradas por los usuarios, sino que también sirve como referencia para definir los requisitos del nuevo producto, garantizando que sea competitivo y cumpla con las expectativas del mercado.
 
-1. Clone el repositorio:
-git clone [URL_DEL_REPOSITORIO]
+En este contexto, se han analizado tres productos que representan diferentes enfoques en el mercado de estaciones meteorológicas:
 
-2. Abra el proyecto en su entorno de desarrollo MBED.
+- **Producto A: WeatherFlow Tempest**  
+  - **Características:** Sistema de estación meteorológica personal avanzado que incluye sensores para medir temperatura, humedad, presión barométrica, velocidad y dirección del viento, lluvia, y radiación UV e iluminación solar. Utiliza un diseño innovador sin partes móviles y se conecta a través de Wi-Fi.
+  - **Ventajas:** Diseño compacto y robusto, alta precisión en mediciones de lluvia y viento, fácil instalación.
+  - **Limitaciones:** Precio elevado, dependencia de conectividad Wi-Fi para funcionamiento óptimo.
+  - **Enlace:** [WeatherFlow Tempest](https://weatherflow.com/tempest-weather-system/)
 
-3. Compile y cargue el código en la placa NUCLEO F429ZI.
+- **Producto B: Davis Instruments Vantage Pro2**  
+  - **Características:** Estación meteorológica profesional que ofrece mediciones precisas de temperatura, humedad, presión barométrica, velocidad y dirección del viento, y precipitación. Incluye un pluviómetro de cubeta basculante y tiene opciones de conectividad tanto cableada como inalámbrica.
+  - **Ventajas:** Alta precisión en todas las mediciones, durabilidad probada, amplia gama de sensores adicionales disponibles.
+  - **Limitaciones:** Instalación más compleja, interfaz de usuario menos intuitiva que modelos más modernos.
+  - **Enlace:** [Davis Vantage Pro2](https://www.davisinstruments.com/pages/vantage-pro2)
 
-4. Conecte el sensor de lluvia (o simule con el botón de usuario) y observe los reportes a través de la comunicación serial.
+- **Producto C: Raspberry Pi Weather Station**  
+  - **Características:** Proyecto de código abierto que utiliza una Raspberry Pi como unidad de procesamiento central, conectada a varios sensores para medir temperatura, humedad, presión barométrica y, opcionalmente, precipitación. Es altamente personalizable y puede ser expandido según las necesidades del usuario.
+  - **Ventajas:** Alta flexibilidad y personalización, costo-efectividad, excelente para propósitos educativos y de investigación.
+  - **Limitaciones:** Requiere conocimientos técnicos para su implementación, puede carecer de la robustez de soluciones comerciales.
+  - **Enlace:** [Raspberry Pi Weather Station](https://projects.raspberrypi.org/en/projects/build-your-own-weather-station)
 
-## Configuración
+| **Producto**            | **Características Principales**                                                                                                                                           | **Enlace**                                                                                                                |
+|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| WeatherFlow Tempest      | Diseño sin partes móviles, sensores integrados para todas las variables meteorológicas comunes, alta precisión en medición de lluvia y viento, conectividad Wi-Fi.          | [Ver producto](https://weatherflow.com/tempest-weather-system/)                                                           |
+| Davis Instruments Vantage Pro2 | Sensores profesionales de alta precisión, pluviómetro de cubeta basculante, opciones de conectividad cableada e inalámbrica, amplia gama de sensores adicionales. | [Ver producto](https://www.davisinstruments.com/pages/vantage-pro2)                                                       |
+| Raspberry Pi Weather Station   | Plataforma de código abierto altamente personalizable, basada en Raspberry Pi, flexibilidad para agregar diversos sensores, ideal para proyectos DIY y educativos.  | [Ver proyecto](https://projects.raspberrypi.org/en/projects/build-your-own-weather-station)                               |
 
-Puede ajustar los siguientes parámetros en el código:
+## Discusión de las Características de los Productos
 
-- `DEBOUNCE_TIME_MS`: Tiempo de debounce para el sensor en milisegundos.
-- `TICK_VALUE`: Valor de precipitación por cada tick del sensor.
-- `TIEMPO_REPORTE_PLUVIOMETRO`: Intervalo de reporte en segundos.
+**WeatherFlow Tempest** representa una solución innovadora y de alta tecnología en el mercado de las estaciones meteorológicas personales. Sus principales ventajas incluyen:
 
-## Ejemplo de Salida
-'''
-    Pluviometro inicializado.
-    Intervalo de reporte: 60 segundos.
-    Configuracion de puerto serie: 115200 baudios, 8 bits de datos, sin paridad, 1 bit de parada.
-    Ubicacion: Este UTM 691249.92, Norte UTM 5711836.83
-    Estado inicial: ESCUCHANDO
-    2024-07-21 12:01:00 - Lluvia acumulada: 0.4 mm
-    2024-07-21 12:02:00 - Lluvia acumulada: 0.6 mm
-'''
+- Diseño compacto y sin partes móviles, lo que reduce el mantenimiento y aumenta la durabilidad.
+- Alta precisión en la medición de lluvia y viento gracias a sus sensores ultrasónicos.
+- Fácil instalación y configuración, ideal para usuarios no técnicos.
+- Conectividad Wi-Fi integrada para transmisión de datos en tiempo real.
 
+Sin embargo, su costo relativamente alto y la dependencia de una conexión Wi-Fi estable pueden ser limitantes para algunos usuarios.
 
-## Licencia
+**Davis Instruments Vantage Pro2** se posiciona como una solución profesional y altamente confiable. Sus características destacadas son:
 
-Este proyecto está bajo la Licencia GNU General Public License v3.0. Vea el archivo `LICENSE` para más detalles.
+- Sensores de grado profesional con alta precisión en todas las mediciones.
+- Robustez y durabilidad probadas en condiciones meteorológicas extremas.
+- Amplia gama de sensores adicionales disponibles para expandir las capacidades del sistema.
+- Opciones de conectividad tanto cableada como inalámbrica, ofreciendo flexibilidad en la instalación.
 
-## Contribuciones
+No obstante, su interfaz de usuario menos intuitiva y la complejidad de instalación pueden ser crítico para usuarios no técnicos.
 
-Las contribuciones son bienvenidas. Por favor, abra un issue para discutir los cambios propuestos antes de hacer un pull request.
+**Raspberry Pi Weather Station** ofrece un enfoque único y altamente personalizable:
+
+- Flexibilidad extrema en términos de hardware y software, permitiendo adaptaciones específicas a las necesidades del usuario.
+- Costo-efectividad, especialmente para proyectos educativos o de investigación con presupuesto limitado.
+- Oportunidad de aprendizaje y experimentación con sistemas embebidos y sensores meteorológicos.
+- Comunidad activa de desarrolladores y amplia disponibilidad de recursos en línea.
+
+Sin embargo, requiere conocimientos técnicos significativos para su implementación y puede carecer de la robustez y precisión de las soluciones comerciales sin una cuidadosa selección e integración de componentes.
+
+En resumen, cada producto ofrece un conjunto único de ventajas y desventajas:
+
+- **WeatherFlow Tempest** es ideal para usuarios que buscan una solución moderna, fácil de usar y con alta precisión en mediciones de lluvia y viento, estando dispuestos a invertir en tecnología avanzada.
+- **Davis Instruments Vantage Pro2** es la elección óptima para aplicaciones profesionales o de investigación que requieren la máxima precisión y confiabilidad en todas las condiciones meteorológicas.
+- **Raspberry Pi Weather Station** es ideal para personas que se inician en la tecnología, educadores e investigadores que valoran la flexibilidad y la capacidad de personalización por encima de la facilidad de uso inmediata.
+
+## Tabla de Requisitos
+
+Con base en el análisis de los productos disponibles en el mercado y siguiendo los criterios SMART (Specific, Measurable, Achievable, Relevant, Time-bound), se han definido los siguientes requisitos para la estación meteorológica a desarrollar:
+
+| **ID** | **Descripción del Requisito**                                                                                 | **Tipo**   | **Prioridad** | **Verificable** | **Responsable** |
+|--------|---------------------------------------------------------------------------------------------------------------|------------|---------------|-----------------|-----------------|
+| RQ01   | El sistema debe medir la temperatura con una precisión de ±0.5°C.                                              | Funcional  | Media         | Sí              | Desarrollador    |
+| RQ02   | El sistema debe ser capaz de medir la humedad relativa con una precisión de ±2\%.                              | Funcional  | Media         | Sí              | Desarrollador    |
+| RQ03   | El sistema debe incluir un pluviómetro capaz de medir la precipitación con una precisión de ±1 mm/hora.        | Funcional  | Alta          | Sí              | Desarrollador    |
+| RQ04   | El sistema debe transmitir los datos recolectados a un servidor remoto a intervalos de 60 minutos utilizando Wi-Fi. | Funcional  | Media         | Sí              | Desarrollador    |
+| RQ05   | El sistema debe almacenar datos en un archivo tabulado con formato fecha, hora y valor dentro de una memoria extraíble del tipo micro SD. | Funcional  | Alta          | Sí              | Desarrollador    |
+
+## Casos de Uso
+
+Para garantizar que el sistema desarrollado cumpla con las expectativas del usuario y sea fácil de operar, se han definido los siguientes casos de uso:
+
+### Caso de Uso 1: Monitoreo de Temperatura y Humedad
+
+**ID:** CU01  
+**Actor(es):** Usuario Final  
+**Descripción:** El usuario consulta la temperatura y la humedad actual desde la aplicación web.  
+**Precondiciones:** El sistema debe estar operativo y conectado a internet.  
+**Flujo Principal:**
+
+1. El usuario accede a la aplicación web.
+2. El sistema muestra la temperatura y la humedad actuales.
+3. El usuario cierra la aplicación.
+
+### Caso de Uso 2: Almacenamiento de Datos de Precipitación
+
+**ID:** CU02  
+**Actor(es):** Sistema, Pluviómetro  
+**Descripción:** El sistema detecta y almacena los datos de precipitación en la memoria interna.  
+**Precondiciones:**  
+
+- El sistema está operativo.
+- El pluviómetro está correctamente calibrado y funcional.
+- Hay espacio disponible en la memoria para almacenar nuevos datos.
+
+**Flujo Principal:**
+
+1. El pluviómetro detecta precipitación.
+2. El sistema registra la cantidad de precipitación detectada.
+3. El sistema marca la lectura con la fecha y hora actual.
+4. El sistema almacena los datos (cantidad de precipitación, fecha y hora) en la memoria interna.
+5. El sistema actualiza el total acumulado de precipitación para el período actual (por ejemplo, día o semana).
+6. Si la memoria está cerca de su capacidad máxima, el sistema genera una alerta de "memoria casi llena".
+
+### Caso de Uso 3: Transmisión de Datos a Servidor Remoto
+
+**ID:** CU03  
+**Actor(es):** Sistema  
+**Descripción:** El sistema transmite los datos recolectados a un servidor remoto.  
+**Precondiciones:** El sistema debe estar operativo y conectado a internet.  
+**Flujo Principal:**
+
+1. El sistema recolecta los datos meteorológicos.
+2. El sistema se conecta al servidor remoto.
+3. El sistema transmite los datos.
+4. El servidor confirma la recepción.
+
